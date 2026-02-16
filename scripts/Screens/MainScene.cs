@@ -34,6 +34,9 @@ public partial class MainScene : Control
     private readonly Queue<string> _messageQueue = new();
     private bool _awaitingClick = false;
 
+    // Party setup screen reference
+    private PartySetupScreen? _partySetupScreen;
+
     public override void _Ready()
     {
         // Get node references
@@ -51,10 +54,7 @@ public partial class MainScene : Control
         // Connect to GameManager signals
         GameManager.Instance.StateChanged += OnStateChanged;
 
-        // Play title music
-        PlayMusic("res://assets/audio/OregonTrail2026_Title_Score_V1a.mp3");
-
-        // Start setup flow
+        // Start setup flow (music is played inside ShowSetupScreen)
         ShowSetupScreen();
     }
 
@@ -65,14 +65,41 @@ public partial class MainScene : Control
     private void ShowSetupScreen()
     {
         _flowState = FlowState.Setup;
-        SetBackground("res://assets/images/bg/bg_independence_street.webp");
 
-        // For now, start with default party (will be replaced with proper UI)
-        // TODO: Full party name entry screen
-        var names = new List<string> { "Gabriel", "Dude", "Andrea", "Tank", "Mellow" };
-        GameManager.Instance.StartNewGame("banker", names);
+        // Hide HUD during setup
+        var hud = GetNodeOrNull("UILayer/HUD");
+        if (hud != null) hud.Set("visible", false);
+        _messagePanel.Visible = false;
+
+        // Play main menu music
+        PlayMusic("res://assets/audio/OregonTrail2026_Main_Menu_Score_V1b.mp3");
+
+        // Create and show the party setup screen
+        _partySetupScreen = new PartySetupScreen();
+        AddChild(_partySetupScreen);
+        _partySetupScreen.SetupComplete += OnPartySetupComplete;
+    }
+
+    private void OnPartySetupComplete(string occupation, string[] names)
+    {
+        // Remove setup screen
+        if (_partySetupScreen != null)
+        {
+            _partySetupScreen.SetupComplete -= OnPartySetupComplete;
+            _partySetupScreen.QueueFree();
+            _partySetupScreen = null;
+        }
+
+        // Show HUD
+        var hud = GetNodeOrNull("UILayer/HUD");
+        if (hud != null) hud.Set("visible", true);
+
+        // Initialize game with player choices
+        var nameList = new System.Collections.Generic.List<string>(names);
+        GameManager.Instance.StartNewGame(occupation, nameList);
         GameManager.Instance.EnterTown("Independence");
 
+        SetBackground("res://assets/images/bg/bg_independence_street.webp");
         ShowMessage("INDEPENDENCE, MISSOURI. 1850.");
         _messageQueue.Enqueue("YOU MUST BUY SUPPLIES BEFORE YOU LEAVE.");
         _messageQueue.Enqueue("[Press SPACE to continue]");
