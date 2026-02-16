@@ -1,0 +1,40 @@
+# Godot 4+ specific ignores
+.godot/
+*.translation
+
+# Godot-specific C#/.NET ignores
+.mono/
+data_*/
+mono_crash.*.json
+
+# .NET / Visual Studio
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+.vs/
+packages/
+
+# NuGet
+*.nupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+
+# OS generated
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+
+# Export
+export_presets.cfg
+*.pck
+*.zip

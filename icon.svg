@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128">
+  <rect width="128" height="128" fill="#4a2800"/>
+  <text x="64" y="50" font-family="Arial" font-size="14" fill="#ffcc00" text-anchor="middle">OREGON</text>
+  <text x="64" y="70" font-family="Arial" font-size="14" fill="#ffcc00" text-anchor="middle">TRAIL</text>
+  <text x="64" y="90" font-family="Arial" font-size="12" fill="#ff9900" text-anchor="middle">2026</text>
+</svg>
