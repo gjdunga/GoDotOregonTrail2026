@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using OregonTrail2026.Models;
 using OregonTrail2026.Systems;

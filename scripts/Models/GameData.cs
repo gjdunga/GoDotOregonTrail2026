@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace OregonTrail2026.Models;
 
 /// <summary>
