@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace OregonTrail2026.Models;
 
@@ -24,96 +25,96 @@ namespace OregonTrail2026.Models;
 public class GameState
 {
     // ---- Progress ----
-    [JsonProperty("occupation")] public string Occupation { get; set; } = "banker";
-    [JsonProperty("cash")] public float Cash { get; set; } = 0f;
-    [JsonProperty("day")] public int Day { get; set; } = 0;
-    [JsonProperty("miles")] public int Miles { get; set; } = 0;
+    [JsonPropertyName("occupation")] public string Occupation { get; set; } = "banker";
+    [JsonPropertyName("cash")] public float Cash { get; set; } = 0f;
+    [JsonPropertyName("day")] public int Day { get; set; } = 0;
+    [JsonPropertyName("miles")] public int Miles { get; set; } = 0;
 
     // ---- Travel ----
-    [JsonProperty("pace")] public string Pace { get; set; } = "steady";
-    [JsonProperty("rations")] public string Rations { get; set; } = "filling";
-    [JsonProperty("weather")] public string Weather { get; set; } = "clear";
+    [JsonPropertyName("pace")] public string Pace { get; set; } = "steady";
+    [JsonPropertyName("rations")] public string Rations { get; set; } = "filling";
+    [JsonPropertyName("weather")] public string Weather { get; set; } = "clear";
 
     // ---- Wagon ----
-    [JsonProperty("wagon")] public int Wagon { get; set; } = 900;
-    [JsonProperty("oxen_condition")] public int OxenCondition { get; set; } = 900;
+    [JsonPropertyName("wagon")] public int Wagon { get; set; } = 900;
+    [JsonPropertyName("oxen_condition")] public int OxenCondition { get; set; } = 900;
 
     // ---- Party ----
-    [JsonProperty("party")] public List<Person> Party { get; set; } = new();
+    [JsonPropertyName("party")] public List<Person> Party { get; set; } = new();
 
     // ---- Supplies ----
-    [JsonProperty("supplies")] public Dictionary<string, int> Supplies { get; set; } = new()
+    [JsonPropertyName("supplies")] public Dictionary<string, int> Supplies { get; set; } = new()
     {
         { "food", 0 }, { "bullets", 0 }, { "clothes", 0 },
         { "oxen", 0 }, { "wheel", 0 }, { "axle", 0 }, { "tongue", 0 },
     };
 
     // ---- Economy ----
-    [JsonProperty("ledger")] public List<Dictionary<string, object>> Ledger { get; set; } = new();
-    [JsonProperty("cure_prices")] public Dictionary<string, int> CurePrices { get; set; } = new();
-    [JsonProperty("remedies")] public Dictionary<string, int> Remedies { get; set; } = new();
+    [JsonPropertyName("ledger")] public List<Dictionary<string, object>> Ledger { get; set; } = new();
+    [JsonPropertyName("cure_prices")] public Dictionary<string, int> CurePrices { get; set; } = new();
+    [JsonPropertyName("remedies")] public Dictionary<string, int> Remedies { get; set; } = new();
 
     // ---- Roles ----
-    [JsonProperty("roles")] public Dictionary<string, string> Roles { get; set; } = new()
+    [JsonPropertyName("roles")] public Dictionary<string, string> Roles { get; set; } = new()
     {
         { "driver", "" }, { "hunter", "" }, { "medic", "" }, { "scout", "" },
     };
 
     // ---- Route ----
-    [JsonProperty("route_choice")] public string RouteChoice { get; set; } = "";
+    [JsonPropertyName("route_choice")] public string RouteChoice { get; set; } = "";
 
     // ---- Events / State ----
-    [JsonProperty("last_event")] public Dictionary<string, object> LastEvent { get; set; } = new();
-    [JsonProperty("last_card")] public string LastCard { get; set; } = "";
-    [JsonProperty("stop_flags")] public Dictionary<string, object> StopFlags { get; set; } = new();
+    [JsonPropertyName("last_event")] public Dictionary<string, object> LastEvent { get; set; } = new();
+    [JsonPropertyName("last_card")] public string LastCard { get; set; } = "";
+    [JsonPropertyName("stop_flags")] public Dictionary<string, object> StopFlags { get; set; } = new();
 
     // ---- Fail state counters ----
-    [JsonProperty("all_unconscious_days")] public int AllUnconsciousDays { get; set; } = 0;
-    [JsonProperty("starve_days")] public int StarveDays { get; set; } = 0;
-    [JsonProperty("stranded_days")] public int StrandedDays { get; set; } = 0;
+    [JsonPropertyName("all_unconscious_days")] public int AllUnconsciousDays { get; set; } = 0;
+    [JsonPropertyName("starve_days")] public int StarveDays { get; set; } = 0;
+    [JsonPropertyName("stranded_days")] public int StrandedDays { get; set; } = 0;
 
     // ---- Encounter / bonus timers ----
-    [JsonProperty("pending_encounter")] public Dictionary<string, object>? PendingEncounter { get; set; }
-    [JsonProperty("free_ferry_uses")] public int FreeFerryUses { get; set; } = 0;
-    [JsonProperty("guidance_until")] public int GuidanceUntil { get; set; } = 0;
-    [JsonProperty("terrain_warning_until")] public int TerrainWarningUntil { get; set; } = 0;
-    [JsonProperty("scout_bonus_until")] public int ScoutBonusUntil { get; set; } = 0;
-    [JsonProperty("river_notes_until")] public int RiverNotesUntil { get; set; } = 0;
-    [JsonProperty("river_notes_bad_until")] public int RiverNotesBadUntil { get; set; } = 0;
-    [JsonProperty("river_notes_target")] public string RiverNotesTarget { get; set; } = "";
-    [JsonProperty("prevent_event_once")] public Dictionary<string, object>? PreventEventOnce { get; set; }
-    [JsonProperty("bad_intel_until")] public int BadIntelUntil { get; set; } = 0;
-    [JsonProperty("bad_intel_kind")] public string BadIntelKind { get; set; } = "";
-    [JsonProperty("bad_intel_source")] public string BadIntelSource { get; set; } = "";
-    [JsonProperty("talk_paid_day")] public Dictionary<string, int> TalkPaidDay { get; set; } = new();
-    [JsonProperty("illness_resist_until")] public int IllnessResistUntil { get; set; } = 0;
-    [JsonProperty("blacksmith_voucher_until")] public int BlacksmithVoucherUntil { get; set; } = 0;
-    [JsonProperty("snow_spell_until")] public int SnowSpellUntil { get; set; } = 0;
-    [JsonProperty("sprayed_until")] public int SprayedUntil { get; set; } = 0;
+    [JsonPropertyName("pending_encounter")] public Dictionary<string, object>? PendingEncounter { get; set; }
+    [JsonPropertyName("free_ferry_uses")] public int FreeFerryUses { get; set; } = 0;
+    [JsonPropertyName("guidance_until")] public int GuidanceUntil { get; set; } = 0;
+    [JsonPropertyName("terrain_warning_until")] public int TerrainWarningUntil { get; set; } = 0;
+    [JsonPropertyName("scout_bonus_until")] public int ScoutBonusUntil { get; set; } = 0;
+    [JsonPropertyName("river_notes_until")] public int RiverNotesUntil { get; set; } = 0;
+    [JsonPropertyName("river_notes_bad_until")] public int RiverNotesBadUntil { get; set; } = 0;
+    [JsonPropertyName("river_notes_target")] public string RiverNotesTarget { get; set; } = "";
+    [JsonPropertyName("prevent_event_once")] public Dictionary<string, object>? PreventEventOnce { get; set; }
+    [JsonPropertyName("bad_intel_until")] public int BadIntelUntil { get; set; } = 0;
+    [JsonPropertyName("bad_intel_kind")] public string BadIntelKind { get; set; } = "";
+    [JsonPropertyName("bad_intel_source")] public string BadIntelSource { get; set; } = "";
+    [JsonPropertyName("talk_paid_day")] public Dictionary<string, int> TalkPaidDay { get; set; } = new();
+    [JsonPropertyName("illness_resist_until")] public int IllnessResistUntil { get; set; } = 0;
+    [JsonPropertyName("blacksmith_voucher_until")] public int BlacksmithVoucherUntil { get; set; } = 0;
+    [JsonPropertyName("snow_spell_until")] public int SnowSpellUntil { get; set; } = 0;
+    [JsonPropertyName("sprayed_until")] public int SprayedUntil { get; set; } = 0;
 
     // ---- Pending actions ----
-    [JsonProperty("pending_stop_type")] public string? PendingStopType { get; set; }
-    [JsonProperty("pending_stop_key")] public string? PendingStopKey { get; set; }
-    [JsonProperty("pending_repair")] public Dictionary<string, object>? PendingRepair { get; set; }
-    [JsonProperty("forced_rest_days")] public int ForcedRestDays { get; set; } = 0;
-    [JsonProperty("pending_weather")] public Dictionary<string, object>? PendingWeather { get; set; }
+    [JsonPropertyName("pending_stop_type")] public string? PendingStopType { get; set; }
+    [JsonPropertyName("pending_stop_key")] public string? PendingStopKey { get; set; }
+    [JsonPropertyName("pending_repair")] public Dictionary<string, object>? PendingRepair { get; set; }
+    [JsonPropertyName("forced_rest_days")] public int ForcedRestDays { get; set; } = 0;
+    [JsonPropertyName("pending_weather")] public Dictionary<string, object>? PendingWeather { get; set; }
 
     // ---- Location tracking ----
-    [JsonProperty("visited_landmarks")] public List<string> VisitedLandmarks { get; set; } = new();
-    [JsonProperty("crossed_rivers")] public List<string> CrossedRivers { get; set; } = new();
-    [JsonProperty("river_depth_ft")] public float RiverDepthFt { get; set; } = 0f;
+    [JsonPropertyName("visited_landmarks")] public List<string> VisitedLandmarks { get; set; } = new();
+    [JsonPropertyName("crossed_rivers")] public List<string> CrossedRivers { get; set; } = new();
+    [JsonPropertyName("river_depth_ft")] public float RiverDepthFt { get; set; } = 0f;
 
     // ---- Repair system ----
-    [JsonProperty("repair_quality")] public Dictionary<string, float> RepairQuality { get; set; } = new()
+    [JsonPropertyName("repair_quality")] public Dictionary<string, float> RepairQuality { get; set; } = new()
     {
         { "wheel", 1.0f }, { "axle", 1.0f }, { "tongue", 1.0f },
     };
-    [JsonProperty("tuneup_until_miles")] public int TuneupUntilMiles { get; set; } = 0;
-    [JsonProperty("jury_rig_until")] public int JuryRigUntil { get; set; } = 0;
-    [JsonProperty("blacksmith_vouchers")] public int BlacksmithVouchers { get; set; } = 0;
+    [JsonPropertyName("tuneup_until_miles")] public int TuneupUntilMiles { get; set; } = 0;
+    [JsonPropertyName("jury_rig_until")] public int JuryRigUntil { get; set; } = 0;
+    [JsonPropertyName("blacksmith_vouchers")] public int BlacksmithVouchers { get; set; } = 0;
 
     // ---- Town/Store state ----
-    [JsonProperty("fort_trade_offers")] public List<Dictionary<string, object>> FortTradeOffers { get; set; } = new();
+    [JsonPropertyName("fort_trade_offers")] public List<Dictionary<string, object>> FortTradeOffers { get; set; } = new();
     public string AtTownName { get; set; } = "";
     public string AtTownStoreKey { get; set; } = "";
     public Dictionary<string, float> StorePriceMult { get; set; } = new();
@@ -121,8 +122,8 @@ public class GameState
     public Dictionary<string, float> StorePriceCache { get; set; } = new();
 
     // ---- Journal ----
-    [JsonProperty("journal")] public List<Dictionary<string, object>> Journal { get; set; } = new();
-    [JsonProperty("journal_seq")] public int JournalSeq { get; set; } = 0;
+    [JsonPropertyName("journal")] public List<Dictionary<string, object>> Journal { get; set; } = new();
+    [JsonPropertyName("journal_seq")] public int JournalSeq { get; set; } = 0;
     public int LastNoteNudgeDay { get; set; } = 0;
     public Dictionary<string, float> TempStorePriceMultByStore { get; set; } = new();
     public int ServiceDiscountRemaining { get; set; } = 0;
@@ -139,10 +140,16 @@ public class GameState
     public bool AnyAlive() => Party.Any(p => p.Alive);
 
     /// <summary>Serialize game state to JSON for save files.</summary>
-    public string ToJson() => JsonConvert.SerializeObject(this, Formatting.Indented);
+    public string ToJson() => JsonSerializer.Serialize(this, _jsonOptions);
 
     /// <summary>Deserialize game state from JSON save file.</summary>
-    public static GameState FromJson(string json) => JsonConvert.DeserializeObject<GameState>(json)!;
+    public static GameState FromJson(string json) => JsonSerializer.Deserialize<GameState>(json, _jsonOptions)!;
+
+    private static readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        WriteIndented = true,
+        PropertyNameCaseInsensitive = true,
+    };
 
     /// <summary>Create a new game with the given occupation and party names.</summary>
     public static GameState NewGameWithParty(string occupationKey, List<string> names)

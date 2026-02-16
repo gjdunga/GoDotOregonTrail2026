@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace OregonTrail2026.Models;
 
@@ -9,42 +9,42 @@ namespace OregonTrail2026.Models;
 /// </summary>
 public class Person
 {
-    [JsonProperty("name")]
+    [JsonPropertyName("name")]
     public string Name { get; set; } = "";
 
-    [JsonProperty("alive")]
+    [JsonPropertyName("alive")]
     public bool Alive { get; set; } = true;
 
     /// <summary>Health points: 0 = dead, 100 = unconscious threshold, 1000 = perfect.</summary>
-    [JsonProperty("health")]
+    [JsonPropertyName("health")]
     public int Health { get; set; } = 1000;
 
     /// <summary>Current illness key from GameConstants.Illnesses (empty if healthy).</summary>
-    [JsonProperty("illness")]
+    [JsonPropertyName("illness")]
     public string Illness { get; set; } = "";
 
-    [JsonProperty("illness_days")]
+    [JsonPropertyName("illness_days")]
     public int IllnessDays { get; set; } = 0;
 
     /// <summary>Severity multiplier 0.0 to 1.0 for damage calculation.</summary>
-    [JsonProperty("illness_severity")]
+    [JsonPropertyName("illness_severity")]
     public float IllnessSeverity { get; set; } = 0.0f;
 
-    [JsonProperty("injury")]
+    [JsonPropertyName("injury")]
     public string Injury { get; set; } = "";
 
     /// <summary>Auto-set when health falls below UNCONSCIOUS_THRESHOLD (100).</summary>
-    [JsonProperty("unconscious")]
+    [JsonPropertyName("unconscious")]
     public bool Unconscious { get; set; } = false;
 
     /// <summary>Assigned role: driver, hunter, medic, scout, or empty.</summary>
-    [JsonProperty("role")]
+    [JsonPropertyName("role")]
     public string Role { get; set; } = "";
 
-    [JsonProperty("traits")]
+    [JsonPropertyName("traits")]
     public List<string> Traits { get; set; } = new();
 
-    [JsonProperty("hooks")]
+    [JsonPropertyName("hooks")]
     public List<string> Hooks { get; set; } = new();
 
     public Person() { }
