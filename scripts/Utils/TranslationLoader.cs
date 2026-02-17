@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using Godot;
+using GodotFileAccess = Godot.FileAccess;
 
 namespace OregonTrail2026.Utils;
 
@@ -25,13 +26,13 @@ public static class TranslationLoader
     /// </summary>
     public static void LoadCsv()
     {
-        if (!FileAccess.FileExists(TranslationCsvPath))
+        if (!GodotFileAccess.FileExists(TranslationCsvPath))
         {
             GD.PrintErr("[TranslationLoader] CSV not found: " + TranslationCsvPath);
             return;
         }
 
-        using var file = FileAccess.Open(TranslationCsvPath, FileAccess.ModeFlags.Read);
+        using var file = GodotFileAccess.Open(TranslationCsvPath, GodotFileAccess.ModeFlags.Read);
         if (file == null)
         {
             GD.PrintErr("[TranslationLoader] Failed to open: " + TranslationCsvPath);

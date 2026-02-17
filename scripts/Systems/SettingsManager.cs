@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Godot;
 using OregonTrail2026.Utils;
+using GodotFileAccess = Godot.FileAccess;
 
 namespace OregonTrail2026.Systems;
 
@@ -158,7 +159,7 @@ public partial class SettingsManager : Node
         try
         {
             string json = JsonSerializer.Serialize(_data, _jsonOptions);
-            using var file = FileAccess.Open(SettingsPath, FileAccess.ModeFlags.Write);
+            using var file = GodotFileAccess.Open(SettingsPath, GodotFileAccess.ModeFlags.Write);
             file?.StoreString(json);
         }
         catch (Exception ex)
@@ -169,7 +170,7 @@ public partial class SettingsManager : Node
 
     private void Load()
     {
-        if (!FileAccess.FileExists(SettingsPath))
+        if (!GodotFileAccess.FileExists(SettingsPath))
         {
             GD.Print("[SettingsManager] No settings file, using defaults.");
             return;
@@ -177,7 +178,7 @@ public partial class SettingsManager : Node
 
         try
         {
-            using var file = FileAccess.Open(SettingsPath, FileAccess.ModeFlags.Read);
+            using var file = GodotFileAccess.Open(SettingsPath, GodotFileAccess.ModeFlags.Read);
             string json = file?.GetAsText() ?? "";
             if (!string.IsNullOrEmpty(json))
             {

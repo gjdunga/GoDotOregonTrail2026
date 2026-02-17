@@ -183,7 +183,7 @@ public partial class DevConsole : Control
                 }
             });
             AddDebugButton(vbox, "Skip 50 Miles", () => { gm.State.Miles += 50; });
-            AddDebugButton(vbox, "Fix Wagon 100%", () => { gm.State.Wagon = 100f; });
+            AddDebugButton(vbox, "Fix Wagon 100%", () => { gm.State.Wagon = 900; });
             AddDebugButton(vbox, "Add All Supplies", () =>
             {
                 gm.State.Cash += 5000;

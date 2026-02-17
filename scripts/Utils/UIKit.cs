@@ -254,10 +254,10 @@ public static class UIKit
         {
             Texture = texture,
             // 9-slice margins for button textures (640x120)
-            MarginLeft   = 30,
-            MarginRight  = 30,
-            MarginTop    = 30,
-            MarginBottom = 20,
+            TextureMarginLeft   = 30,
+            TextureMarginRight  = 30,
+            TextureMarginTop    = 30,
+            TextureMarginBottom = 20,
             // Content margins (padding inside the button for text)
             ContentMarginLeft   = 20,
             ContentMarginRight  = 20,
