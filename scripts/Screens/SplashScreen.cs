@@ -82,7 +82,19 @@ public partial class SplashScreen : Control
         _logo.SetOffset(Side.Bottom, 0);
         AddChild(_logo);
 
-        // Loading bar frame (themed panel 9-slice)
+        // Bar fill (warm goldenrod, rendered UNDER the frame so borders overlay it)
+        _barFill = new ColorRect { Color = new Color("B8860B") };
+        _barFill.SetAnchor(Side.Left, 0.2f);
+        _barFill.SetAnchor(Side.Right, 0.8f);
+        _barFill.SetAnchor(Side.Top, 0.74f);
+        _barFill.SetAnchor(Side.Bottom, 0.74f);
+        _barFill.SetOffset(Side.Left, 6);
+        _barFill.SetOffset(Side.Top, 6);
+        _barFill.SetOffset(Side.Right, -6);
+        _barFill.SetOffset(Side.Bottom, 40);
+        AddChild(_barFill);
+
+        // Loading bar frame (themed panel 9-slice, on top of the fill)
         _barFrame = UIKit.MakePanel();
         _barFrame.SetAnchor(Side.Left, 0.2f);
         _barFrame.SetAnchor(Side.Right, 0.8f);
@@ -94,20 +106,8 @@ public partial class SplashScreen : Control
         _barFrame.SetOffset(Side.Bottom, 46);
         AddChild(_barFrame);
 
-        // Bar fill (warm amber, inside the frame, inset past the 9-slice borders)
-        _barFill = new ColorRect { Color = new Color("B8860B") }; // dark goldenrod
-        _barFill.SetAnchor(Side.Left, 0);
-        _barFill.SetAnchor(Side.Top, 0);
-        _barFill.SetAnchor(Side.Bottom, 1.0f);
-        _barFill.SetOffset(Side.Left, 42);
-        _barFill.SetOffset(Side.Top, 12);
-        _barFill.SetOffset(Side.Right, 42);
-        _barFill.SetOffset(Side.Bottom, -12);
-        _barFrame.AddChild(_barFill);
-
-        // Status text (well below bar, off-white, readable)
-        _statusLabel = UIKit.MakeBodyLabel(Tr(_loadingSteps[0].key), 18, UIKit.ColWhite);
-        _statusLabel.HorizontalAlignment = HorizontalAlignment.Center;
+        // Status text (below bar, off-white, display font for western consistency)
+        _statusLabel = UIKit.MakeDisplayLabel(Tr(_loadingSteps[0].key), 20, UIKit.ColWhite);
         _statusLabel.SetAnchor(Side.Left, 0.15f);
         _statusLabel.SetAnchor(Side.Right, 0.85f);
         _statusLabel.SetAnchor(Side.Top, 0.74f);
@@ -169,11 +169,12 @@ public partial class SplashScreen : Control
             float logoAlpha = Math.Clamp(_elapsed / LogoFadeDuration, 0f, 1f);
             _logo.Modulate = new Color(1, 1, 1, logoAlpha);
 
-            // Progress bar fill
+            // Progress bar fill (fill is a sibling with same anchors as frame)
             float progress = Math.Clamp(_elapsed / LoadDuration, 0f, 1f);
             float frameWidth = _barFrame.Size.X;
-            float maxFillWidth = frameWidth - 84; // 42px padding each side
-            _barFill.SetOffset(Side.Right, 42 + maxFillWidth * progress);
+            // At 0%: right offset collapses to left edge. At 100%: right offset = -6 (full width)
+            float rightOffset = -frameWidth + 6 + progress * (frameWidth - 12);
+            _barFill.SetOffset(Side.Right, rightOffset);
 
             // Status text
             string statusKey = _loadingSteps[0].key;
@@ -191,7 +192,7 @@ public partial class SplashScreen : Control
             if (_elapsed >= LoadDuration)
             {
                 _phase = Phase.Waiting;
-                _barFill.SetOffset(Side.Right, 42 + maxFillWidth);
+                _barFill.SetOffset(Side.Right, -6);
                 _statusLabel.Visible = false;
                 _pressKeyLabel.Visible = true;
                 _pulseTimer = 0f;
