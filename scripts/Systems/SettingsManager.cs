@@ -81,9 +81,31 @@ public partial class SettingsManager : Node
     {
         Instance = this;
         TranslationLoader.LoadCsv();
+        EnsureAudioBuses();
         Load();
         ApplyAll();
         GD.Print("[SettingsManager] Initialized.");
+    }
+
+    /// <summary>Create Music and SFX audio buses if they don't exist.</summary>
+    private static void EnsureAudioBuses()
+    {
+        if (AudioServer.GetBusIndex("Music") < 0)
+        {
+            int idx = AudioServer.BusCount;
+            AudioServer.AddBus();
+            AudioServer.SetBusName(idx, "Music");
+            AudioServer.SetBusSend(idx, "Master");
+            GD.Print("[SettingsManager] Created 'Music' audio bus");
+        }
+        if (AudioServer.GetBusIndex("SFX") < 0)
+        {
+            int idx = AudioServer.BusCount;
+            AudioServer.AddBus();
+            AudioServer.SetBusName(idx, "SFX");
+            AudioServer.SetBusSend(idx, "Master");
+            GD.Print("[SettingsManager] Created 'SFX' audio bus");
+        }
     }
 
     // ========================================================================
@@ -102,12 +124,29 @@ public partial class SettingsManager : Node
         // Godot default buses: Master (0), Music (1), SFX (2)
         // Ensure buses exist before setting. If they don't, we just use Master.
         SetBusVolume(0, _data.MasterVolume); // Master
+        GD.Print($"[SettingsManager] ApplyAudio: Master={_data.MasterVolume:F2} (bus 0)");
 
         int musicIdx = AudioServer.GetBusIndex("Music");
-        if (musicIdx >= 0) SetBusVolume(musicIdx, _data.MusicVolume);
+        if (musicIdx >= 0)
+        {
+            SetBusVolume(musicIdx, _data.MusicVolume);
+            GD.Print($"[SettingsManager] ApplyAudio: Music={_data.MusicVolume:F2} (bus {musicIdx})");
+        }
+        else
+        {
+            GD.PrintErr("[SettingsManager] WARNING: 'Music' audio bus not found. Create it in Godot: Audio > Buses > Add Bus > rename to 'Music'");
+        }
 
         int sfxIdx = AudioServer.GetBusIndex("SFX");
-        if (sfxIdx >= 0) SetBusVolume(sfxIdx, _data.SfxVolume);
+        if (sfxIdx >= 0)
+        {
+            SetBusVolume(sfxIdx, _data.SfxVolume);
+            GD.Print($"[SettingsManager] ApplyAudio: SFX={_data.SfxVolume:F2} (bus {sfxIdx})");
+        }
+        else
+        {
+            GD.PrintErr("[SettingsManager] WARNING: 'SFX' audio bus not found. Create it in Godot: Audio > Buses > Add Bus > rename to 'SFX'");
+        }
     }
 
     private static void SetBusVolume(int busIdx, float linear)
@@ -127,6 +166,7 @@ public partial class SettingsManager : Node
 
     private void ApplyWindowMode()
     {
+        GD.Print($"[SettingsManager] ApplyWindowMode: Fullscreen={_data.Fullscreen}");
         if (_data.Fullscreen)
         {
             DisplayServer.WindowSetMode(DisplayServer.WindowMode.Fullscreen);
@@ -134,12 +174,12 @@ public partial class SettingsManager : Node
         else
         {
             DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
-            // Center the window after leaving fullscreen
             var screenSize = DisplayServer.ScreenGetSize();
             var winSize = DisplayServer.WindowGetSize();
             var pos = (screenSize - winSize) / 2;
             DisplayServer.WindowSetPosition(pos);
         }
+        GD.Print($"[SettingsManager] Window mode now: {DisplayServer.WindowGetMode()}");
     }
 
     private void ApplyLanguage()
