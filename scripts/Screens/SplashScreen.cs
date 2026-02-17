@@ -82,33 +82,18 @@ public partial class SplashScreen : Control
         _logo.SetOffset(Side.Bottom, 0);
         AddChild(_logo);
 
-        // Bar background (empty bar area, sits behind the fill)
-        var barBg = new ColorRect { Color = UIKit.ColParchment };
-        barBg.SetAnchor(Side.Left, 0.2f);
-        barBg.SetAnchor(Side.Right, 0.8f);
-        barBg.SetAnchor(Side.Top, 0.74f);
-        barBg.SetAnchor(Side.Bottom, 0.74f);
-        barBg.SetOffset(Side.Left, 38);
-        barBg.SetOffset(Side.Top, 10);
-        barBg.SetOffset(Side.Right, -38);
-        barBg.SetOffset(Side.Bottom, 36);
-        AddChild(barBg);
-
-        // Bar fill (warm goldenrod, rendered UNDER the frame so borders overlay it)
-        _barFill = new ColorRect { Color = new Color("B8860B") };
-        _barFill.SetAnchor(Side.Left, 0.2f);
-        _barFill.SetAnchor(Side.Right, 0.8f);
-        _barFill.SetAnchor(Side.Top, 0.74f);
-        _barFill.SetAnchor(Side.Bottom, 0.74f);
-        _barFill.SetOffset(Side.Left, 38);
-        _barFill.SetOffset(Side.Top, 10);
-        _barFill.SetOffset(Side.Right, -38);
-        _barFill.SetOffset(Side.Bottom, 36);
-        AddChild(_barFill);
-
-        // Loading bar frame (themed panel 9-slice, on top of the fill, center transparent)
-        _barFrame = UIKit.MakePanel();
-        _barFrame.DrawCenter = false;        _barFrame.SetAnchor(Side.Left, 0.2f);
+        // Progress bar frame (purpose-built 9-slice with parchment center)
+        var barTex = GD.Load<Texture2D>("res://assets/images/ui/frame_progressbar_9slice.png");
+        _barFrame = new NinePatchRect
+        {
+            Texture = barTex,
+            PatchMarginLeft = 8,
+            PatchMarginRight = 8,
+            PatchMarginTop = 8,
+            PatchMarginBottom = 8,
+            DrawCenter = true,
+        };
+        _barFrame.SetAnchor(Side.Left, 0.2f);
         _barFrame.SetAnchor(Side.Right, 0.8f);
         _barFrame.SetAnchor(Side.Top, 0.74f);
         _barFrame.SetAnchor(Side.Bottom, 0.74f);
@@ -117,6 +102,18 @@ public partial class SplashScreen : Control
         _barFrame.SetOffset(Side.Top, 0);
         _barFrame.SetOffset(Side.Bottom, 46);
         AddChild(_barFrame);
+
+        // Bar fill (goldenrod, child of frame, inset past borders)
+        _barFill = new ColorRect { Color = new Color("B8860B") };
+        _barFill.SetAnchor(Side.Left, 0);
+        _barFill.SetAnchor(Side.Top, 0);
+        _barFill.SetAnchor(Side.Right, 0);
+        _barFill.SetAnchor(Side.Bottom, 1.0f);
+        _barFill.SetOffset(Side.Left, 8);
+        _barFill.SetOffset(Side.Top, 8);
+        _barFill.SetOffset(Side.Right, 8);
+        _barFill.SetOffset(Side.Bottom, -8);
+        _barFrame.AddChild(_barFill);
 
         // Status text (below bar, off-white, display font for western consistency)
         _statusLabel = UIKit.MakeDisplayLabel(Tr(_loadingSteps[0].key), 20, UIKit.ColWhite);
@@ -181,14 +178,11 @@ public partial class SplashScreen : Control
             float logoAlpha = Math.Clamp(_elapsed / LogoFadeDuration, 0f, 1f);
             _logo.Modulate = new Color(1, 1, 1, logoAlpha);
 
-            // Progress bar fill (fill is a sibling with same anchors as frame)
+            // Progress bar fill (fill is child of frame with 8px inset)
             float progress = Math.Clamp(_elapsed / LoadDuration, 0f, 1f);
             float frameWidth = _barFrame.Size.X;
-            // Fill spans from left+38 to right-38 (76px total inset)
-            // At 0%: right edge collapses to left edge. At 100%: right offset = -38
-            float fillableWidth = frameWidth - 76; // area between the two 38px insets
-            float rightOffset = -(frameWidth - 38) + (fillableWidth * progress);
-            _barFill.SetOffset(Side.Right, rightOffset);
+            float fillableWidth = frameWidth - 16; // 8px inset each side
+            _barFill.SetOffset(Side.Right, 8 + fillableWidth * progress);
 
             // Status text
             string statusKey = _loadingSteps[0].key;
@@ -206,7 +200,7 @@ public partial class SplashScreen : Control
             if (_elapsed >= LoadDuration)
             {
                 _phase = Phase.Waiting;
-                _barFill.SetOffset(Side.Right, -38);
+                _barFill.SetOffset(Side.Right, 8 + (_barFrame.Size.X - 16));
                 _statusLabel.Visible = false;
                 _pressKeyLabel.Visible = true;
                 _pulseTimer = 0f;
