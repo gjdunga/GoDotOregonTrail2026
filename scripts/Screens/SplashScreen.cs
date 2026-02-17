@@ -88,10 +88,10 @@ public partial class SplashScreen : Control
         _barFill.SetAnchor(Side.Right, 0.8f);
         _barFill.SetAnchor(Side.Top, 0.74f);
         _barFill.SetAnchor(Side.Bottom, 0.74f);
-        _barFill.SetOffset(Side.Left, 6);
-        _barFill.SetOffset(Side.Top, 6);
-        _barFill.SetOffset(Side.Right, -6);
-        _barFill.SetOffset(Side.Bottom, 40);
+        _barFill.SetOffset(Side.Left, 38);
+        _barFill.SetOffset(Side.Top, 10);
+        _barFill.SetOffset(Side.Right, -38);
+        _barFill.SetOffset(Side.Bottom, 36);
         AddChild(_barFill);
 
         // Loading bar frame (themed panel 9-slice, on top of the fill)
@@ -172,8 +172,10 @@ public partial class SplashScreen : Control
             // Progress bar fill (fill is a sibling with same anchors as frame)
             float progress = Math.Clamp(_elapsed / LoadDuration, 0f, 1f);
             float frameWidth = _barFrame.Size.X;
-            // At 0%: right offset collapses to left edge. At 100%: right offset = -6 (full width)
-            float rightOffset = -frameWidth + 6 + progress * (frameWidth - 12);
+            // Fill spans from left+38 to right-38 (76px total inset)
+            // At 0%: right edge collapses to left edge. At 100%: right offset = -38
+            float fillableWidth = frameWidth - 76; // area between the two 38px insets
+            float rightOffset = -(frameWidth - 38) + (fillableWidth * progress);
             _barFill.SetOffset(Side.Right, rightOffset);
 
             // Status text
@@ -192,7 +194,7 @@ public partial class SplashScreen : Control
             if (_elapsed >= LoadDuration)
             {
                 _phase = Phase.Waiting;
-                _barFill.SetOffset(Side.Right, -6);
+                _barFill.SetOffset(Side.Right, -38);
                 _statusLabel.Visible = false;
                 _pressKeyLabel.Visible = true;
                 _pulseTimer = 0f;
