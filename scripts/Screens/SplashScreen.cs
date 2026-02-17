@@ -97,6 +97,7 @@ public partial class SplashScreen : Control
         _barFill = new ColorRect { Color = UIKit.ColAmber };
         _barFill.SetAnchor(Side.Left, 0);
         _barFill.SetAnchor(Side.Top, 0);
+        _barFill.SetAnchor(Side.Bottom, 1.0f);
         _barFill.SetOffset(Side.Left, 42);
         _barFill.SetOffset(Side.Top, 8);
         _barFill.SetOffset(Side.Right, 42);
@@ -130,9 +131,11 @@ public partial class SplashScreen : Control
         // Version label (bottom-right)
         var versionLabel = UIKit.MakeBodyLabel($"v{GameConstants.GameVersion}", 13, UIKit.ColGray);
         versionLabel.HorizontalAlignment = HorizontalAlignment.Right;
+        versionLabel.SetAnchor(Side.Left, 0.7f);
         versionLabel.SetAnchor(Side.Right, 1.0f);
+        versionLabel.SetAnchor(Side.Top, 1.0f);
         versionLabel.SetAnchor(Side.Bottom, 1.0f);
-        versionLabel.SetOffset(Side.Left, -200);
+        versionLabel.SetOffset(Side.Left, 0);
         versionLabel.SetOffset(Side.Right, -12);
         versionLabel.SetOffset(Side.Top, -28);
         versionLabel.SetOffset(Side.Bottom, -6);
@@ -141,9 +144,11 @@ public partial class SplashScreen : Control
         // ESC hint (bottom-left)
         var escLabel = UIKit.MakeBodyLabel(Tr(TK.SplashEscQuit), 11, UIKit.ColGray);
         escLabel.SetAnchor(Side.Left, 0.0f);
+        escLabel.SetAnchor(Side.Right, 0.3f);
+        escLabel.SetAnchor(Side.Top, 1.0f);
         escLabel.SetAnchor(Side.Bottom, 1.0f);
         escLabel.SetOffset(Side.Left, 12);
-        escLabel.SetOffset(Side.Right, 200);
+        escLabel.SetOffset(Side.Right, 0);
         escLabel.SetOffset(Side.Top, -28);
         escLabel.SetOffset(Side.Bottom, -6);
         AddChild(escLabel);
