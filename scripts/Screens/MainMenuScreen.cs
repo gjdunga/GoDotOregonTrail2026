@@ -67,22 +67,17 @@ public partial class MainMenuScreen : Control
         };
         center.AddChild(logo);
 
-        // Divider
-        var divider = UIKit.MakeDivider();
-        divider.CustomMinimumSize = new Vector2(0, 24);
-        center.AddChild(divider);
+        center.AddChild(UIKit.MakeSpacer(12));
 
-        center.AddChild(UIKit.MakeSpacer(8));
-
-        // Menu buttons
+        // Menu buttons (all same style for visual consistency)
         _menuButtons = new VBoxContainer
         {
             Alignment = BoxContainer.AlignmentMode.Center,
         };
         _menuButtons.AddThemeConstantOverride("separation", 6);
 
-        var btnNew    = UIKit.MakePrimaryButton(Tr(TK.MenuNewGame));
-        var btnLoad   = UIKit.MakePrimaryButton(Tr(TK.MenuLoadGame));
+        var btnNew    = UIKit.MakeSecondaryButton(Tr(TK.MenuNewGame), 20);
+        var btnLoad   = UIKit.MakeSecondaryButton(Tr(TK.MenuLoadGame), 20);
         var btnDelete = UIKit.MakeSecondaryButton(Tr(TK.MenuDeleteGame));
         var btnGfx    = UIKit.MakeSecondaryButton(Tr(TK.MenuGraphics));
         var btnSound  = UIKit.MakeSecondaryButton(Tr(TK.MenuSound));
