@@ -5,16 +5,20 @@ using System.Linq;
 using Godot;
 using OregonTrail2026.Models;
 using OregonTrail2026.Systems;
+using OregonTrail2026.Utils;
 
 namespace OregonTrail2026.Screens;
 
 /// <summary>
 /// Main scene controller. Manages game flow, screen transitions, HUD updates.
-/// Converted from RenPy: label start, label travel_loop, and all screen transitions
-/// in OT2026_main.rpy.
 ///
-/// Game flow states:
-///   Setup -> Travel -> (Store|Rest|Hunt|Fish|Map|Roles|River|GameOver|Victory)
+/// Flow:
+///   Splash -> MainMenu -> (NewGame -> PartySetup -> Travel)
+///                       -> (LoadGame -> Travel)
+///                       -> (DeleteGame -> back to menu)
+///                       -> (Settings sub-panels -> back to menu)
+///
+/// F12 activates DevConsole during active gameplay only.
 /// </summary>
 public partial class MainScene : Control
 {
@@ -31,7 +35,7 @@ public partial class MainScene : Control
     private Label _healthLabel = null!;
 
     // Game flow state
-    private enum FlowState { Splash, Setup, Travel, AwaitChoice, Store, Rest, Hunt, Fish, River, GameOver, Victory }
+    private enum FlowState { Splash, MainMenu, Setup, Travel, AwaitChoice, Store, Rest, Hunt, Fish, River, GameOver, Victory }
     private FlowState _flowState = FlowState.Splash;
 
     // Pending message queue
@@ -39,8 +43,10 @@ public partial class MainScene : Control
     private bool _awaitingClick = false;
 
     // Screen references
-    private PartySetupScreen? _partySetupScreen;
     private SplashScreen? _splashScreen;
+    private MainMenuScreen? _mainMenuScreen;
+    private PartySetupScreen? _partySetupScreen;
+    private DevConsole? _devConsole;
 
     public override void _Ready()
     {
@@ -59,27 +65,25 @@ public partial class MainScene : Control
         // Connect to GameManager signals
         GameManager.Instance.StateChanged += OnStateChanged;
 
+        // Create dev console (always exists, just hidden)
+        _devConsole = new DevConsole();
+        AddChild(_devConsole);
+
         // Start with splash screen
         ShowSplashScreen();
     }
 
     // ========================================================================
-    // GAME FLOW
+    // SPLASH -> MAIN MENU -> GAME
     // ========================================================================
 
     private void ShowSplashScreen()
     {
         _flowState = FlowState.Splash;
+        HideHUD();
 
-        // Hide HUD and message panel during splash
-        var hud = GetNodeOrNull("UILayer/HUD");
-        if (hud != null) hud.Set("visible", false);
-        _messagePanel.Visible = false;
-
-        // Play title music
         PlayMusic("res://assets/audio/OregonTrail2026_Title_Score_V1a.mp3");
 
-        // Create and show splash screen
         _splashScreen = new SplashScreen();
         AddChild(_splashScreen);
         _splashScreen.SplashFinished += OnSplashFinished;
@@ -87,7 +91,6 @@ public partial class MainScene : Control
 
     private void OnSplashFinished()
     {
-        // Remove splash screen
         if (_splashScreen != null)
         {
             _splashScreen.SplashFinished -= OnSplashFinished;
@@ -95,23 +98,81 @@ public partial class MainScene : Control
             _splashScreen = null;
         }
 
-        // Transition to party setup (music changes inside)
+        // Apply user's saved window preference now (after splash)
+        // SettingsManager already applied during _Ready, but this ensures
+        // the transition from splash windowed size to user's preference.
+
+        ShowMainMenu();
+    }
+
+    private void ShowMainMenu()
+    {
+        _flowState = FlowState.MainMenu;
+        HideHUD();
+
+        PlayMusic("res://assets/audio/OregonTrail2026_Main_Menu_Score_V1b.mp3");
+
+        _mainMenuScreen = new MainMenuScreen();
+        AddChild(_mainMenuScreen);
+        _mainMenuScreen.NewGameRequested    += OnNewGameRequested;
+        _mainMenuScreen.LoadGameRequested   += OnLoadGameRequested;
+        _mainMenuScreen.DeleteGameRequested += OnDeleteGameRequested;
+    }
+
+    private void RemoveMainMenu()
+    {
+        if (_mainMenuScreen != null)
+        {
+            _mainMenuScreen.NewGameRequested    -= OnNewGameRequested;
+            _mainMenuScreen.LoadGameRequested   -= OnLoadGameRequested;
+            _mainMenuScreen.DeleteGameRequested -= OnDeleteGameRequested;
+            _mainMenuScreen.QueueFree();
+            _mainMenuScreen = null;
+        }
+    }
+
+    private void OnNewGameRequested()
+    {
+        RemoveMainMenu();
         ShowSetupScreen();
     }
+
+    private void OnLoadGameRequested()
+    {
+        // TODO: Show save/load slot selection screen
+        // For now, attempt to load auto-save
+        var (state, msg) = SaveFileSystem.Load("auto");
+        if (state != null)
+        {
+            RemoveMainMenu();
+            GameManager.Instance.LoadFromState(state);
+            ShowHUD();
+            _flowState = FlowState.AwaitChoice;
+            UpdateHUD();
+            ShowChoiceMenuHint();
+            PlayMusic("res://assets/audio/OregonTrail2026_Travel_Score_V1a.mp3");
+        }
+        else
+        {
+            GD.Print($"[MainScene] Load failed: {msg}");
+        }
+    }
+
+    private void OnDeleteGameRequested()
+    {
+        // TODO: Show save slot selection for deletion
+        GD.Print("[MainScene] Delete game requested (not yet implemented)");
+    }
+
+    // ========================================================================
+    // PARTY SETUP
+    // ========================================================================
 
     private void ShowSetupScreen()
     {
         _flowState = FlowState.Setup;
+        HideHUD();
 
-        // Hide HUD during setup
-        var hud = GetNodeOrNull("UILayer/HUD");
-        if (hud != null) hud.Set("visible", false);
-        _messagePanel.Visible = false;
-
-        // Play main menu music
-        PlayMusic("res://assets/audio/OregonTrail2026_Main_Menu_Score_V1b.mp3");
-
-        // Create and show the party setup screen
         _partySetupScreen = new PartySetupScreen();
         AddChild(_partySetupScreen);
         _partySetupScreen.SetupComplete += OnPartySetupComplete;
@@ -119,7 +180,6 @@ public partial class MainScene : Control
 
     private void OnPartySetupComplete(string occupation, string[] names)
     {
-        // Remove setup screen
         if (_partySetupScreen != null)
         {
             _partySetupScreen.SetupComplete -= OnPartySetupComplete;
@@ -127,11 +187,8 @@ public partial class MainScene : Control
             _partySetupScreen = null;
         }
 
-        // Show HUD
-        var hud = GetNodeOrNull("UILayer/HUD");
-        if (hud != null) hud.Set("visible", true);
+        ShowHUD();
 
-        // Initialize game with player choices
         var nameList = new System.Collections.Generic.List<string>(names);
         GameManager.Instance.StartNewGame(occupation, nameList);
         GameManager.Instance.EnterTown("Independence");
@@ -144,6 +201,10 @@ public partial class MainScene : Control
         PlayMusic("res://assets/audio/OregonTrail2026_Main_Menu_Score_V1b.mp3");
     }
 
+    // ========================================================================
+    // TRAVEL LOOP
+    // ========================================================================
+
     private void StartTravelLoop()
     {
         _flowState = FlowState.Travel;
@@ -155,7 +216,6 @@ public partial class MainScene : Control
     {
         var gm = GameManager.Instance;
 
-        // Check fail states first
         string? fail = gm.CheckFailStates();
         if (fail != null)
         {
@@ -163,14 +223,11 @@ public partial class MainScene : Control
             return;
         }
 
-        // Update background
         string bg = TravelSystem.TravelBgForState(gm.State);
         SetBackground(bg);
 
-        // Execute one day
         var info = gm.TravelOneDay();
 
-        // Show event card if any
         if (!string.IsNullOrEmpty(gm.State.LastCard))
         {
             string? eventText = gm.State.LastEvent.GetValueOrDefault("text", null) as string;
@@ -178,7 +235,6 @@ public partial class MainScene : Control
                 ShowMessage(eventText);
         }
 
-        // Handle pending repair
         if (gm.State.PendingRepair != null)
         {
             string part = gm.State.PendingRepair["part"] as string ?? "wheel";
@@ -187,7 +243,6 @@ public partial class MainScene : Control
             gm.State.PendingRepair = null;
         }
 
-        // Handle pending stop (town or river)
         if (gm.State.PendingStopType == "town")
         {
             string townName = gm.State.PendingStopKey ?? "";
@@ -199,13 +254,11 @@ public partial class MainScene : Control
         }
         else if (gm.State.PendingStopType == "river")
         {
-            // TODO: Show river crossing screen
             string riverKey = gm.State.PendingStopKey ?? "";
             var river = Array.Find(GameData.Rivers, r => r.Key == riverKey);
             if (river != null)
             {
                 ShowMessage($"YOU MUST CROSS THE {river.Name.ToUpper()}.");
-                // Auto-ford for now, will be replaced with proper river screen
                 var (success, msg) = RiverSystem.AttemptCrossing(gm.State, river, RiverSystem.CrossingMethod.Ford);
                 _messageQueue.Enqueue(msg);
             }
@@ -213,7 +266,6 @@ public partial class MainScene : Control
             gm.State.PendingStopKey = null;
         }
 
-        // Check fail states again after events
         fail = gm.CheckFailStates();
         if (fail != null)
         {
@@ -221,7 +273,6 @@ public partial class MainScene : Control
             return;
         }
 
-        // Show daily choice menu
         _flowState = FlowState.AwaitChoice;
         UpdateHUD();
     }
@@ -253,11 +304,18 @@ public partial class MainScene : Control
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (@event is InputEventKey keyEvent && keyEvent.Pressed)
+        if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
         {
+            // F12: DevConsole (only during active gameplay, not splash/menu/setup)
+            if (keyEvent.Keycode == Key.F12 && IsInGameplay())
+            {
+                _devConsole?.Activate();
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+
             if (_awaitingClick)
             {
-                // Advance message queue
                 if (_messageQueue.Count > 0)
                 {
                     ShowMessage(_messageQueue.Dequeue());
@@ -280,6 +338,23 @@ public partial class MainScene : Control
         }
     }
 
+    /// <summary>
+    /// Returns true if the game is in an active gameplay state where
+    /// the dev console should be accessible.
+    /// </summary>
+    private bool IsInGameplay()
+    {
+        return _flowState is FlowState.Travel
+            or FlowState.AwaitChoice
+            or FlowState.Store
+            or FlowState.Rest
+            or FlowState.Hunt
+            or FlowState.Fish
+            or FlowState.River
+            or FlowState.GameOver
+            or FlowState.Victory;
+    }
+
     private void HandleChoiceInput(InputEventKey key)
     {
         var gm = GameManager.Instance;
@@ -300,27 +375,27 @@ public partial class MainScene : Control
 
         switch (choice)
         {
-            case 1: // Continue
+            case 1:
                 gm.LeaveTown();
                 gm.State.LastCard = "";
                 gm.State.LastEvent.Clear();
                 ExecuteTravelDay();
                 break;
-            case 2: // Map
+            case 2:
                 ShowMessage($"MILES: {gm.State.Miles} / {GameConstants.TargetMiles}\n" +
                            $"TERRAIN: {TravelSystem.TerrainByMiles(gm.State.Miles).ToUpper()}");
                 break;
-            case 3: // Store
+            case 3:
                 if (!string.IsNullOrEmpty(gm.State.AtTownStoreKey))
                     ShowMessage("STORE SCREEN - USE S KEY TO BUY SUPPLIES");
                 else
                     ShowMessage("NO STORE HERE.");
                 break;
-            case 4: // Rest
+            case 4:
                 gm.Rest(1);
                 ShowMessage("YOU REST FOR 1 DAY.");
                 break;
-            case 5: // Hunt
+            case 5:
                 if (gm.State.Supplies.GetValueOrDefault("bullets", 0) <= 0)
                     ShowMessage("NO AMMO.");
                 else
@@ -331,16 +406,16 @@ public partial class MainScene : Control
                     ShowMessage($"YOU BROUGHT BACK {meat} LBS OF FOOD.");
                 }
                 break;
-            case 6: // Fish
+            case 6:
                 int fish = GameManager.RandInt(GameConstants.FishYieldMin, GameConstants.FishYieldMax);
                 CargoSystem.AddFoodWithCapacity(gm.State, fish);
                 ShowMessage($"YOU CAUGHT {fish} LBS OF FISH.");
                 break;
-            case 7: // Save
+            case 7:
                 gm.QuickSave();
                 ShowMessage("GAME SAVED.");
                 break;
-            case 8: // Roles
+            case 8:
                 ShowMessage("ROLES: DRIVER, HUNTER, MEDIC, SCOUT");
                 break;
         }
@@ -356,8 +431,12 @@ public partial class MainScene : Control
         }
         else if (_flowState == FlowState.AwaitChoice)
         {
-            // Stay in await choice mode, show the menu hint
             ShowChoiceMenuHint();
+        }
+        else if (_flowState == FlowState.GameOver)
+        {
+            // Return to main menu after game over
+            ShowMainMenu();
         }
     }
 
@@ -374,6 +453,19 @@ public partial class MainScene : Control
     // ========================================================================
     // UI HELPERS
     // ========================================================================
+
+    private void HideHUD()
+    {
+        var hud = GetNodeOrNull("UILayer/HUD");
+        if (hud != null) hud.Set("visible", false);
+        _messagePanel.Visible = false;
+    }
+
+    private void ShowHUD()
+    {
+        var hud = GetNodeOrNull("UILayer/HUD");
+        if (hud != null) hud.Set("visible", true);
+    }
 
     private void SetBackground(string path)
     {
@@ -413,7 +505,6 @@ public partial class MainScene : Control
         _cashLabel.Text = $"${st.Cash:F2}";
         _foodLabel.Text = $"FOOD: {st.Supplies.GetValueOrDefault("food", 0)}";
 
-        // Average party health
         var living = st.Living();
         if (living.Count > 0)
         {

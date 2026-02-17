@@ -2,6 +2,7 @@
 using System;
 using Godot;
 using OregonTrail2026.Models;
+using OregonTrail2026.Utils;
 
 namespace OregonTrail2026.Screens;
 
@@ -9,31 +10,17 @@ namespace OregonTrail2026.Screens;
 /// Splash/loading screen shown at game launch.
 ///
 /// Phases:
-///   1. LOADING  - Logo fades in, progress bar fills over ~10 seconds.
-///                 Escape quits the game immediately.
-///   2. WAITING  - "PRESS ANY KEY TO CONTINUE" pulses.
-///                 Any key except Escape advances to party setup.
-///                 Escape quits the game.
+///   1. LOADING  - Logo scales to fit window, progress bar fills over ~10s.
+///                 Any key skips to end. Escape quits.
+///   2. WAITING  - Pulsing "PRESS ANY KEY TO CONTINUE".
+///                 Any key advances. Escape quits.
 ///
-/// Music: OregonTrail2026_Title_Score_V1a.mp3 (starts immediately, continues
-///        until the key press, then MainScene switches to menu music).
-///
-/// Visual: Black background, centered logo (fade in), amber loading bar,
-///         version text bottom-right.
+/// All strings use Tr() for i18n. All UI uses UIKit for themed consistency.
 /// </summary>
 public partial class SplashScreen : Control
 {
     [Signal]
     public delegate void SplashFinishedEventHandler();
-
-    // ---- Palette (matching PartySetupScreen 1985 aesthetic) ----
-    private static readonly Color ColAmber     = new("FFD700");
-    private static readonly Color ColAmberDim  = new("8B7332");
-    private static readonly Color ColBarBg     = new("1A1408");
-    private static readonly Color ColBarFill   = new("FFD700");
-    private static readonly Color ColBlack     = new("0A0804");
-    private static readonly Color ColGray      = new("666655");
-    private static readonly Color ColWhite     = new("F0E6D2");
 
     // ---- Timing ----
     private const float LogoFadeDuration = 1.5f;
@@ -46,154 +33,119 @@ public partial class SplashScreen : Control
     private float _elapsed = 0f;
     private float _pulseTimer = 0f;
 
-    // ---- Fake loading steps (shown as status text under the bar) ----
-    private static readonly (float pct, string text)[] _loadingSteps =
+    // ---- Loading step keys (progress threshold, translation key) ----
+    private static readonly (float pct, string key)[] _loadingSteps =
     {
-        (0.00f, "HITCHING THE OXEN..."),
-        (0.08f, "LOADING SUPPLIES..."),
-        (0.18f, "CHECKING WAGON WHEELS..."),
-        (0.30f, "MAPPING THE TRAIL..."),
-        (0.42f, "STOCKING PROVISIONS..."),
-        (0.55f, "READING ALMANAC..."),
-        (0.65f, "SCOUTING THE ROUTE..."),
-        (0.78f, "PACKING THE WAGON..."),
-        (0.88f, "SAYING GOODBYE TO KIN..."),
-        (0.96f, "READY TO DEPART!"),
+        (0.00f, TK.SplashLoading1),
+        (0.08f, TK.SplashLoading2),
+        (0.18f, TK.SplashLoading3),
+        (0.30f, TK.SplashLoading4),
+        (0.42f, TK.SplashLoading5),
+        (0.55f, TK.SplashLoading6),
+        (0.65f, TK.SplashLoading7),
+        (0.78f, TK.SplashLoading8),
+        (0.88f, TK.SplashLoading9),
+        (0.96f, TK.SplashLoading10),
     };
 
     // ---- Nodes ----
     private TextureRect _logo = null!;
-    private ColorRect _barBg = null!;
+    private NinePatchRect _barFrame = null!;
     private ColorRect _barFill = null!;
     private Label _statusLabel = null!;
     private Label _pressKeyLabel = null!;
-    private Label _versionLabel = null!;
 
     public override void _Ready()
     {
         SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
 
         // Black background
-        var bg = new ColorRect { Color = ColBlack };
+        var bg = new ColorRect { Color = UIKit.ColBlack };
         bg.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         AddChild(bg);
 
-        // Logo (centered, starts invisible for fade-in)
+        // Logo (centered, fits window, fades in)
         _logo = new TextureRect
         {
             Texture = GD.Load<Texture2D>("res://assets/images/ui/logo_oregon_trail_2026.webp"),
-            ExpandMode = TextureRect.ExpandModeEnum.KeepSize,
+            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-            Modulate = new Color(1, 1, 1, 0), // starts fully transparent
+            Modulate = new Color(1, 1, 1, 0),
         };
-        _logo.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-        // Shift logo up a bit to make room for the loading bar
-        _logo.SetAnchor(Side.Top, 0.05f);
-        _logo.SetAnchor(Side.Bottom, 0.70f);
+        _logo.SetAnchor(Side.Left, 0.1f);
+        _logo.SetAnchor(Side.Right, 0.9f);
+        _logo.SetAnchor(Side.Top, 0.03f);
+        _logo.SetAnchor(Side.Bottom, 0.65f);
+        _logo.SetOffset(Side.Left, 0);
+        _logo.SetOffset(Side.Right, 0);
+        _logo.SetOffset(Side.Top, 0);
+        _logo.SetOffset(Side.Bottom, 0);
         AddChild(_logo);
 
-        // Loading bar container (centered below logo)
-        var barContainer = new Control();
-        barContainer.SetAnchor(Side.Left, 0.5f);
-        barContainer.SetAnchor(Side.Top, 0.74f);
-        barContainer.SetOffset(Side.Left, -250);
-        barContainer.SetOffset(Side.Right, 250);
-        barContainer.SetOffset(Side.Top, 0);
-        barContainer.SetOffset(Side.Bottom, 24);
-        AddChild(barContainer);
+        // Loading bar frame (themed panel 9-slice)
+        _barFrame = UIKit.MakePanel();
+        _barFrame.SetAnchor(Side.Left, 0.15f);
+        _barFrame.SetAnchor(Side.Right, 0.85f);
+        _barFrame.SetAnchor(Side.Top, 0.70f);
+        _barFrame.SetOffset(Side.Left, 0);
+        _barFrame.SetOffset(Side.Right, 0);
+        _barFrame.SetOffset(Side.Top, 0);
+        _barFrame.SetOffset(Side.Bottom, 36);
+        AddChild(_barFrame);
 
-        // Bar background
-        _barBg = new ColorRect
-        {
-            Color = ColBarBg,
-            CustomMinimumSize = new Vector2(500, 24),
-        };
-        _barBg.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-        barContainer.AddChild(_barBg);
-
-        // Bar border
-        var barBorder = new ReferenceRect
-        {
-            BorderColor = ColAmberDim,
-            BorderWidth = 2.0f,
-            EditorOnly = false,
-        };
-        barBorder.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-        barContainer.AddChild(barBorder);
-
-        // Bar fill (starts at width 0)
-        _barFill = new ColorRect
-        {
-            Color = ColBarFill,
-            CustomMinimumSize = new Vector2(0, 20),
-        };
+        // Bar fill (amber, inside the frame, padded)
+        _barFill = new ColorRect { Color = UIKit.ColAmber };
         _barFill.SetAnchor(Side.Left, 0);
         _barFill.SetAnchor(Side.Top, 0);
-        _barFill.SetOffset(Side.Left, 2);
-        _barFill.SetOffset(Side.Top, 2);
-        _barFill.SetOffset(Side.Right, 2);   // will be updated in _Process
-        _barFill.SetOffset(Side.Bottom, -2);
-        barContainer.AddChild(_barFill);
+        _barFill.SetOffset(Side.Left, 42);
+        _barFill.SetOffset(Side.Top, 8);
+        _barFill.SetOffset(Side.Right, 42);
+        _barFill.SetOffset(Side.Bottom, -8);
+        _barFrame.AddChild(_barFill);
 
         // Status text (below bar)
-        _statusLabel = new Label
-        {
-            Text = _loadingSteps[0].text,
-            HorizontalAlignment = HorizontalAlignment.Center,
-        };
-        _statusLabel.SetAnchor(Side.Left, 0.5f);
-        _statusLabel.SetAnchor(Side.Top, 0.79f);
-        _statusLabel.SetOffset(Side.Left, -250);
-        _statusLabel.SetOffset(Side.Right, 250);
-        _statusLabel.AddThemeColorOverride("font_color", ColAmberDim);
-        _statusLabel.AddThemeFontSizeOverride("font_size", 14);
+        _statusLabel = UIKit.MakeBodyLabel(Tr(_loadingSteps[0].key), 14, UIKit.ColAmberDim);
+        _statusLabel.HorizontalAlignment = HorizontalAlignment.Center;
+        _statusLabel.SetAnchor(Side.Left, 0.15f);
+        _statusLabel.SetAnchor(Side.Right, 0.85f);
+        _statusLabel.SetAnchor(Side.Top, 0.70f);
+        _statusLabel.SetOffset(Side.Left, 0);
+        _statusLabel.SetOffset(Side.Right, 0);
+        _statusLabel.SetOffset(Side.Top, 42);
+        _statusLabel.SetOffset(Side.Bottom, 62);
         AddChild(_statusLabel);
 
         // "PRESS ANY KEY" (hidden until loading completes)
-        _pressKeyLabel = new Label
-        {
-            Text = "PRESS ANY KEY TO CONTINUE",
-            HorizontalAlignment = HorizontalAlignment.Center,
-            Visible = false,
-        };
-        _pressKeyLabel.SetAnchor(Side.Left, 0.5f);
-        _pressKeyLabel.SetAnchor(Side.Top, 0.86f);
-        _pressKeyLabel.SetOffset(Side.Left, -200);
-        _pressKeyLabel.SetOffset(Side.Right, 200);
-        _pressKeyLabel.AddThemeColorOverride("font_color", ColAmber);
-        _pressKeyLabel.AddThemeFontSizeOverride("font_size", 20);
+        _pressKeyLabel = UIKit.MakeDisplayLabel(Tr(TK.SplashPressKey), 22, UIKit.ColAmber);
+        _pressKeyLabel.SetAnchor(Side.Left, 0.15f);
+        _pressKeyLabel.SetAnchor(Side.Right, 0.85f);
+        _pressKeyLabel.SetAnchor(Side.Top, 0.83f);
+        _pressKeyLabel.SetOffset(Side.Left, 0);
+        _pressKeyLabel.SetOffset(Side.Right, 0);
+        _pressKeyLabel.SetOffset(Side.Top, 0);
+        _pressKeyLabel.SetOffset(Side.Bottom, 30);
+        _pressKeyLabel.Visible = false;
         AddChild(_pressKeyLabel);
 
         // Version label (bottom-right)
-        _versionLabel = new Label
-        {
-            Text = $"v{GameConstants.GameVersion}",
-            HorizontalAlignment = HorizontalAlignment.Right,
-        };
-        _versionLabel.SetAnchor(Side.Right, 1.0f);
-        _versionLabel.SetAnchor(Side.Bottom, 1.0f);
-        _versionLabel.SetOffset(Side.Left, -200);
-        _versionLabel.SetOffset(Side.Right, -16);
-        _versionLabel.SetOffset(Side.Top, -32);
-        _versionLabel.SetOffset(Side.Bottom, -8);
-        _versionLabel.AddThemeColorOverride("font_color", ColGray);
-        _versionLabel.AddThemeFontSizeOverride("font_size", 13);
-        AddChild(_versionLabel);
+        var versionLabel = UIKit.MakeBodyLabel($"v{GameConstants.GameVersion}", 13, UIKit.ColGray);
+        versionLabel.HorizontalAlignment = HorizontalAlignment.Right;
+        versionLabel.SetAnchor(Side.Right, 1.0f);
+        versionLabel.SetAnchor(Side.Bottom, 1.0f);
+        versionLabel.SetOffset(Side.Left, -200);
+        versionLabel.SetOffset(Side.Right, -12);
+        versionLabel.SetOffset(Side.Top, -28);
+        versionLabel.SetOffset(Side.Bottom, -6);
+        AddChild(versionLabel);
 
-        // Escape hint (bottom-left)
-        var escLabel = new Label
-        {
-            Text = "ESC TO QUIT",
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
+        // ESC hint (bottom-left)
+        var escLabel = UIKit.MakeBodyLabel(Tr(TK.SplashEscQuit), 11, UIKit.ColGray);
         escLabel.SetAnchor(Side.Left, 0.0f);
         escLabel.SetAnchor(Side.Bottom, 1.0f);
-        escLabel.SetOffset(Side.Left, 16);
+        escLabel.SetOffset(Side.Left, 12);
         escLabel.SetOffset(Side.Right, 200);
-        escLabel.SetOffset(Side.Top, -32);
-        escLabel.SetOffset(Side.Bottom, -8);
-        escLabel.AddThemeColorOverride("font_color", ColGray);
-        escLabel.AddThemeFontSizeOverride("font_size", 11);
+        escLabel.SetOffset(Side.Top, -28);
+        escLabel.SetOffset(Side.Bottom, -6);
         AddChild(escLabel);
     }
 
@@ -209,51 +161,48 @@ public partial class SplashScreen : Control
             float logoAlpha = Math.Clamp(_elapsed / LogoFadeDuration, 0f, 1f);
             _logo.Modulate = new Color(1, 1, 1, logoAlpha);
 
-            // Progress bar
+            // Progress bar fill
             float progress = Math.Clamp(_elapsed / LoadDuration, 0f, 1f);
-            float barMaxWidth = 496f; // 500 - 4px padding
-            _barFill.SetOffset(Side.Right, 2 + barMaxWidth * progress);
+            float frameWidth = _barFrame.Size.X;
+            float maxFillWidth = frameWidth - 84; // 42px padding each side
+            _barFill.SetOffset(Side.Right, 42 + maxFillWidth * progress);
 
-            // Status text (step through messages based on progress)
-            string statusText = _loadingSteps[0].text;
+            // Status text
+            string statusKey = _loadingSteps[0].key;
             for (int i = _loadingSteps.Length - 1; i >= 0; i--)
             {
                 if (progress >= _loadingSteps[i].pct)
                 {
-                    statusText = _loadingSteps[i].text;
+                    statusKey = _loadingSteps[i].key;
                     break;
                 }
             }
-            _statusLabel.Text = statusText;
+            _statusLabel.Text = Tr(statusKey);
 
-            // Loading complete
+            // Complete
             if (_elapsed >= LoadDuration)
             {
                 _phase = Phase.Waiting;
-                _barFill.SetOffset(Side.Right, 2 + barMaxWidth);
+                _barFill.SetOffset(Side.Right, 42 + maxFillWidth);
                 _statusLabel.Visible = false;
                 _pressKeyLabel.Visible = true;
                 _pulseTimer = 0f;
             }
         }
-        else // Phase.Waiting
+        else
         {
-            // Pulse the "PRESS ANY KEY" label
             _pulseTimer += dt;
             float alpha = 0.4f + 0.6f * (float)Math.Abs(Math.Sin(_pulseTimer * Math.PI / PulsePeriod));
             _pressKeyLabel.AddThemeColorOverride("font_color",
-                new Color(ColAmber.R, ColAmber.G, ColAmber.B, alpha));
+                new Color(UIKit.ColAmber.R, UIKit.ColAmber.G, UIKit.ColAmber.B, alpha));
         }
     }
 
     public override void _UnhandledInput(InputEvent @event)
     {
         if (!Visible) return;
-
-        // Only respond to key presses (not releases, not mouse)
         if (@event is not InputEventKey key || !key.Pressed || key.Echo) return;
 
-        // Escape always quits
         if (key.Keycode == Key.Escape)
         {
             GetTree().Quit();
@@ -263,13 +212,11 @@ public partial class SplashScreen : Control
 
         if (_phase == Phase.Loading)
         {
-            // During loading, any non-Escape key skips to the end
             _elapsed = LoadDuration;
             GetViewport().SetInputAsHandled();
         }
-        else // Phase.Waiting
+        else
         {
-            // Any key advances
             GetViewport().SetInputAsHandled();
             EmitSignal(SignalName.SplashFinished);
         }

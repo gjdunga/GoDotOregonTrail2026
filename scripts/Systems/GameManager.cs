@@ -47,6 +47,14 @@ public partial class GameManager : Node
         GD.Print($"[GameManager] New game started. Occupation: {occupation}, Cash: ${State.Cash}");
     }
 
+    /// <summary>Restore a game from a previously saved state.</summary>
+    public void LoadFromState(GameState state)
+    {
+        State = state;
+        EmitSignal(SignalName.StateChanged);
+        GD.Print($"[GameManager] Game loaded. Day: {state.Day}, Miles: {state.Miles}");
+    }
+
     // ========================================================================
     // TRAVEL LOOP (converted from label travel_loop)
     // ========================================================================
