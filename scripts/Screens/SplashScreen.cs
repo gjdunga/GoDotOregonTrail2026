@@ -94,9 +94,9 @@ public partial class SplashScreen : Control
         _barFill.SetOffset(Side.Bottom, 36);
         AddChild(_barFill);
 
-        // Loading bar frame (themed panel 9-slice, on top of the fill)
+        // Loading bar frame (themed panel 9-slice, on top of the fill, center transparent)
         _barFrame = UIKit.MakePanel();
-        _barFrame.SetAnchor(Side.Left, 0.2f);
+        _barFrame.DrawCenter = false;        _barFrame.SetAnchor(Side.Left, 0.2f);
         _barFrame.SetAnchor(Side.Right, 0.8f);
         _barFrame.SetAnchor(Side.Top, 0.74f);
         _barFrame.SetAnchor(Side.Bottom, 0.74f);
