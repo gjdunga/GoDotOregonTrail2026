@@ -253,11 +253,11 @@ public static class UIKit
         return new StyleBoxTexture
         {
             Texture = texture,
-            // 9-slice margins for button textures (640x120)
-            TextureMarginLeft   = 30,
-            TextureMarginRight  = 30,
-            TextureMarginTop    = 30,
-            TextureMarginBottom = 20,
+            // 9-slice margins for button textures (624x120, cropped)
+            TextureMarginLeft   = 18,
+            TextureMarginRight  = 28,
+            TextureMarginTop    = 28,
+            TextureMarginBottom = 18,
             // Content margins (padding inside the button for text)
             ContentMarginLeft   = 20,
             ContentMarginRight  = 20,

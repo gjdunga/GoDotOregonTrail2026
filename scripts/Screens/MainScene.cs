@@ -484,6 +484,7 @@ public partial class MainScene : Control
     {
         if (ResourceLoader.Exists(path))
         {
+            _audioPlayer.Bus = "Music";
             _audioPlayer.Stream = GD.Load<AudioStream>(path);
             _audioPlayer.Play();
         }

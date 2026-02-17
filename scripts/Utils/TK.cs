@@ -87,5 +87,6 @@ public static class TK
     public const string CommonNo            = "COMMON_NO";
     public const string CommonOk            = "COMMON_OK";
     public const string CommonCancel        = "COMMON_CANCEL";
+    public const string CommonApply         = "COMMON_APPLY";
     public const string CommonConfirm       = "COMMON_CONFIRM";
 }

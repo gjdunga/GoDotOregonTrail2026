@@ -153,27 +153,43 @@ public partial class MainMenuScreen : Control
             var title = UIKit.MakeDisplayLabel(Tr(TK.MenuGraphics), 22);
             vbox.AddChild(title);
 
-            // Fullscreen toggle
+            // Fullscreen toggle (staged, not instant)
             var fsRow = new HBoxContainer();
             var fsLabel = UIKit.MakeBodyLabel(Tr(TK.SettingsFullscreen), 16, UIKit.ColParchment);
             fsLabel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             fsRow.AddChild(fsLabel);
 
+            var sm = OregonTrail2026.Systems.SettingsManager.Instance;
             var fsToggle = new CheckButton();
-            fsToggle.ButtonPressed = OregonTrail2026.Systems.SettingsManager.Instance.Fullscreen;
-            fsToggle.Toggled += (on) => OregonTrail2026.Systems.SettingsManager.Instance.Fullscreen = on;
+            fsToggle.ButtonPressed = sm.Fullscreen;
             fsRow.AddChild(fsToggle);
             vbox.AddChild(fsRow);
+
+            // Button row
+            var btnRow = new HBoxContainer();
+            btnRow.AddThemeConstantOverride("separation", 12);
+            btnRow.Alignment = BoxContainer.AlignmentMode.Center;
+
+            // Apply button
+            var btnApply = UIKit.MakeSecondaryButton(Tr(TK.CommonApply), 16);
+            btnApply.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+            btnApply.Pressed += () =>
+            {
+                sm.Fullscreen = fsToggle.ButtonPressed;
+                GD.Print($"[MainMenu] Applied fullscreen={fsToggle.ButtonPressed}");
+            };
+            btnRow.AddChild(btnApply);
 
             // Back button
             var btnBack = UIKit.MakeSecondaryButton(Tr(TK.SettingsBack), 16);
             btnBack.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
             btnBack.Pressed += CloseSettingsPanel;
-            vbox.AddChild(btnBack);
+            btnRow.AddChild(btnBack);
+
+            vbox.AddChild(btnRow);
 
             ((PanelContainer)_settingsPanel).AddChild(vbox);
 
-            // Position overlay in center
             _settingsPanel.SetAnchor(Side.Left, 0.25f);
             _settingsPanel.SetAnchor(Side.Right, 0.75f);
             _settingsPanel.SetAnchor(Side.Top, 0.3f);
