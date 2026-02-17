@@ -8,6 +8,8 @@ using System.Text;
 using System.Text.Json;
 using Godot;
 using OregonTrail2026.Models;
+using GodotFileAccess = Godot.FileAccess;
+using SysFileAccess = System.IO.FileAccess;
 
 namespace OregonTrail2026.Systems;
 
@@ -101,11 +103,11 @@ public static class SaveFileSystem
             string globalTemp = ProjectSettings.GlobalizePath(tempPath);
             string globalFinal = ProjectSettings.GlobalizePath(path);
 
-            using (var fs = new FileStream(globalTemp, FileMode.Create, FileAccess.Write))
+            using (var fs = new FileStream(globalTemp, FileMode.Create, SysFileAccess.Write))
             using (var zip = new ZipArchive(fs, ZipArchiveMode.Create))
             {
                 // If an existing archive has current.enc, copy it to backup first
-                if (FileAccess.FileExists(path))
+                if (GodotFileAccess.FileExists(path))
                 {
                     byte[]? existingCurrent = ReadEntryFromExistingArchive(globalFinal, CurrentEntry);
                     if (existingCurrent != null)
@@ -150,7 +152,7 @@ public static class SaveFileSystem
     public static (GameState? State, string Message) Load(string slotId)
     {
         string path = GetSlotPath(slotId);
-        if (!FileAccess.FileExists(path))
+        if (!GodotFileAccess.FileExists(path))
             return (null, "Save file not found.");
 
         string globalPath = ProjectSettings.GlobalizePath(path);
@@ -181,13 +183,13 @@ public static class SaveFileSystem
     public static SaveSlotMeta? ReadMeta(string slotId)
     {
         string path = GetSlotPath(slotId);
-        if (!FileAccess.FileExists(path))
+        if (!GodotFileAccess.FileExists(path))
             return null;
 
         try
         {
             string globalPath = ProjectSettings.GlobalizePath(path);
-            using var fs = new FileStream(globalPath, FileMode.Open, FileAccess.Read);
+            using var fs = new FileStream(globalPath, FileMode.Open, SysFileAccess.Read);
             using var zip = new ZipArchive(fs, ZipArchiveMode.Read);
             var entry = zip.GetEntry(MetaEntry);
             if (entry == null) return null;
@@ -219,7 +221,7 @@ public static class SaveFileSystem
         if (slotId == AutoSlotId) return false; // can't rename auto-save
 
         string path = GetSlotPath(slotId);
-        if (!FileAccess.FileExists(path)) return false;
+        if (!GodotFileAccess.FileExists(path)) return false;
 
         try
         {
@@ -233,7 +235,7 @@ public static class SaveFileSystem
 
             // Rewrite meta.json inside the ZIP
             // ZipArchiveMode.Update allows modifying entries in place
-            using var fs = new FileStream(globalPath, FileMode.Open, FileAccess.ReadWrite);
+            using var fs = new FileStream(globalPath, FileMode.Open, SysFileAccess.ReadWrite);
             using var zip = new ZipArchive(fs, ZipArchiveMode.Update);
 
             // Delete old meta entry and write new one
@@ -258,7 +260,7 @@ public static class SaveFileSystem
     public static bool DeleteSlot(string slotId)
     {
         string path = GetSlotPath(slotId);
-        if (!FileAccess.FileExists(path)) return true; // already gone
+        if (!GodotFileAccess.FileExists(path)) return true; // already gone
 
         try
         {
@@ -276,7 +278,7 @@ public static class SaveFileSystem
 
     /// <summary>Check if a slot has a save file.</summary>
     public static bool SlotExists(string slotId) =>
-        FileAccess.FileExists(GetSlotPath(slotId));
+        GodotFileAccess.FileExists(GetSlotPath(slotId));
 
     // ========================================================================
     // AUTO-SAVE TRIGGERS (called by GameManager)
@@ -437,7 +439,7 @@ public static class SaveFileSystem
     {
         try
         {
-            using var fs = new FileStream(archivePath, FileMode.Open, FileAccess.Read);
+            using var fs = new FileStream(archivePath, FileMode.Open, SysFileAccess.Read);
             using var zip = new ZipArchive(fs, ZipArchiveMode.Read);
             var entry = zip.GetEntry(entryName);
             if (entry == null)
@@ -468,7 +470,7 @@ public static class SaveFileSystem
     {
         try
         {
-            using var fs = new FileStream(archivePath, FileMode.Open, FileAccess.Read);
+            using var fs = new FileStream(archivePath, FileMode.Open, SysFileAccess.Read);
             using var zip = new ZipArchive(fs, ZipArchiveMode.Read);
             var entry = zip.GetEntry(entryName);
             if (entry == null) return null;
