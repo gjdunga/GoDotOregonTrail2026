@@ -84,43 +84,46 @@ public partial class SplashScreen : Control
 
         // Loading bar frame (themed panel 9-slice)
         _barFrame = UIKit.MakePanel();
-        _barFrame.SetAnchor(Side.Left, 0.15f);
-        _barFrame.SetAnchor(Side.Right, 0.85f);
-        _barFrame.SetAnchor(Side.Top, 0.70f);
+        _barFrame.SetAnchor(Side.Left, 0.2f);
+        _barFrame.SetAnchor(Side.Right, 0.8f);
+        _barFrame.SetAnchor(Side.Top, 0.74f);
+        _barFrame.SetAnchor(Side.Bottom, 0.74f);
         _barFrame.SetOffset(Side.Left, 0);
         _barFrame.SetOffset(Side.Right, 0);
         _barFrame.SetOffset(Side.Top, 0);
-        _barFrame.SetOffset(Side.Bottom, 36);
+        _barFrame.SetOffset(Side.Bottom, 46);
         AddChild(_barFrame);
 
-        // Bar fill (amber, inside the frame, padded)
-        _barFill = new ColorRect { Color = UIKit.ColAmber };
+        // Bar fill (dark brown, inside the frame, inset past the 9-slice borders)
+        _barFill = new ColorRect { Color = UIKit.ColDarkBrown };
         _barFill.SetAnchor(Side.Left, 0);
         _barFill.SetAnchor(Side.Top, 0);
         _barFill.SetAnchor(Side.Bottom, 1.0f);
         _barFill.SetOffset(Side.Left, 42);
-        _barFill.SetOffset(Side.Top, 8);
+        _barFill.SetOffset(Side.Top, 12);
         _barFill.SetOffset(Side.Right, 42);
-        _barFill.SetOffset(Side.Bottom, -8);
+        _barFill.SetOffset(Side.Bottom, -12);
         _barFrame.AddChild(_barFill);
 
-        // Status text (below bar)
-        _statusLabel = UIKit.MakeBodyLabel(Tr(_loadingSteps[0].key), 14, UIKit.ColAmberDim);
+        // Status text (below bar, larger and clearly separated)
+        _statusLabel = UIKit.MakeBodyLabel(Tr(_loadingSteps[0].key), 18, UIKit.ColAmberDim);
         _statusLabel.HorizontalAlignment = HorizontalAlignment.Center;
         _statusLabel.SetAnchor(Side.Left, 0.15f);
         _statusLabel.SetAnchor(Side.Right, 0.85f);
-        _statusLabel.SetAnchor(Side.Top, 0.70f);
+        _statusLabel.SetAnchor(Side.Top, 0.74f);
+        _statusLabel.SetAnchor(Side.Bottom, 0.74f);
         _statusLabel.SetOffset(Side.Left, 0);
         _statusLabel.SetOffset(Side.Right, 0);
-        _statusLabel.SetOffset(Side.Top, 42);
-        _statusLabel.SetOffset(Side.Bottom, 62);
+        _statusLabel.SetOffset(Side.Top, 54);
+        _statusLabel.SetOffset(Side.Bottom, 80);
         AddChild(_statusLabel);
 
         // "PRESS ANY KEY" (hidden until loading completes)
         _pressKeyLabel = UIKit.MakeDisplayLabel(Tr(TK.SplashPressKey), 22, UIKit.ColAmber);
         _pressKeyLabel.SetAnchor(Side.Left, 0.15f);
         _pressKeyLabel.SetAnchor(Side.Right, 0.85f);
-        _pressKeyLabel.SetAnchor(Side.Top, 0.83f);
+        _pressKeyLabel.SetAnchor(Side.Top, 0.86f);
+        _pressKeyLabel.SetAnchor(Side.Bottom, 0.86f);
         _pressKeyLabel.SetOffset(Side.Left, 0);
         _pressKeyLabel.SetOffset(Side.Right, 0);
         _pressKeyLabel.SetOffset(Side.Top, 0);
