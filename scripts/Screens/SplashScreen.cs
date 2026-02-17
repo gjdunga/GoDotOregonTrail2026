@@ -94,8 +94,8 @@ public partial class SplashScreen : Control
         _barFrame.SetOffset(Side.Bottom, 46);
         AddChild(_barFrame);
 
-        // Bar fill (dark brown, inside the frame, inset past the 9-slice borders)
-        _barFill = new ColorRect { Color = UIKit.ColDarkBrown };
+        // Bar fill (warm amber, inside the frame, inset past the 9-slice borders)
+        _barFill = new ColorRect { Color = new Color("B8860B") }; // dark goldenrod
         _barFill.SetAnchor(Side.Left, 0);
         _barFill.SetAnchor(Side.Top, 0);
         _barFill.SetAnchor(Side.Bottom, 1.0f);
@@ -105,8 +105,8 @@ public partial class SplashScreen : Control
         _barFill.SetOffset(Side.Bottom, -12);
         _barFrame.AddChild(_barFill);
 
-        // Status text (below bar, larger and clearly separated)
-        _statusLabel = UIKit.MakeBodyLabel(Tr(_loadingSteps[0].key), 18, UIKit.ColAmberDim);
+        // Status text (well below bar, off-white, readable)
+        _statusLabel = UIKit.MakeBodyLabel(Tr(_loadingSteps[0].key), 18, UIKit.ColWhite);
         _statusLabel.HorizontalAlignment = HorizontalAlignment.Center;
         _statusLabel.SetAnchor(Side.Left, 0.15f);
         _statusLabel.SetAnchor(Side.Right, 0.85f);
@@ -114,8 +114,8 @@ public partial class SplashScreen : Control
         _statusLabel.SetAnchor(Side.Bottom, 0.74f);
         _statusLabel.SetOffset(Side.Left, 0);
         _statusLabel.SetOffset(Side.Right, 0);
-        _statusLabel.SetOffset(Side.Top, 54);
-        _statusLabel.SetOffset(Side.Bottom, 80);
+        _statusLabel.SetOffset(Side.Top, 72);
+        _statusLabel.SetOffset(Side.Bottom, 98);
         AddChild(_statusLabel);
 
         // "PRESS ANY KEY" (hidden until loading completes)
@@ -209,23 +209,37 @@ public partial class SplashScreen : Control
     public override void _UnhandledInput(InputEvent @event)
     {
         if (!Visible) return;
-        if (@event is not InputEventKey key || !key.Pressed || key.Echo) return;
 
-        if (key.Keycode == Key.Escape)
+        // Handle keyboard
+        if (@event is InputEventKey key && key.Pressed && !key.Echo)
         {
-            GetTree().Quit();
+            if (key.Keycode == Key.Escape)
+            {
+                GetTree().Quit();
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+            HandleAdvance();
             GetViewport().SetInputAsHandled();
             return;
         }
 
+        // Handle mouse click
+        if (@event is InputEventMouseButton mouse && mouse.Pressed && mouse.ButtonIndex == MouseButton.Left)
+        {
+            HandleAdvance();
+            GetViewport().SetInputAsHandled();
+        }
+    }
+
+    private void HandleAdvance()
+    {
         if (_phase == Phase.Loading)
         {
             _elapsed = LoadDuration;
-            GetViewport().SetInputAsHandled();
         }
         else
         {
-            GetViewport().SetInputAsHandled();
             EmitSignal(SignalName.SplashFinished);
         }
     }
