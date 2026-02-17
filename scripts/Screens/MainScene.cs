@@ -30,15 +30,16 @@ public partial class MainScene : Control
     private Label _healthLabel = null!;
 
     // Game flow state
-    private enum FlowState { Setup, Travel, AwaitChoice, Store, Rest, Hunt, Fish, River, GameOver, Victory }
-    private FlowState _flowState = FlowState.Setup;
+    private enum FlowState { Splash, Setup, Travel, AwaitChoice, Store, Rest, Hunt, Fish, River, GameOver, Victory }
+    private FlowState _flowState = FlowState.Splash;
 
     // Pending message queue
     private readonly Queue<string> _messageQueue = new();
     private bool _awaitingClick = false;
 
-    // Party setup screen reference
+    // Screen references
     private PartySetupScreen? _partySetupScreen;
+    private SplashScreen? _splashScreen;
 
     public override void _Ready()
     {
@@ -57,13 +58,45 @@ public partial class MainScene : Control
         // Connect to GameManager signals
         GameManager.Instance.StateChanged += OnStateChanged;
 
-        // Start setup flow (music is played inside ShowSetupScreen)
-        ShowSetupScreen();
+        // Start with splash screen
+        ShowSplashScreen();
     }
 
     // ========================================================================
     // GAME FLOW
     // ========================================================================
+
+    private void ShowSplashScreen()
+    {
+        _flowState = FlowState.Splash;
+
+        // Hide HUD and message panel during splash
+        var hud = GetNodeOrNull("UILayer/HUD");
+        if (hud != null) hud.Set("visible", false);
+        _messagePanel.Visible = false;
+
+        // Play title music
+        PlayMusic("res://assets/audio/OregonTrail2026_Title_Score_V1a.mp3");
+
+        // Create and show splash screen
+        _splashScreen = new SplashScreen();
+        AddChild(_splashScreen);
+        _splashScreen.SplashFinished += OnSplashFinished;
+    }
+
+    private void OnSplashFinished()
+    {
+        // Remove splash screen
+        if (_splashScreen != null)
+        {
+            _splashScreen.SplashFinished -= OnSplashFinished;
+            _splashScreen.QueueFree();
+            _splashScreen = null;
+        }
+
+        // Transition to party setup (music changes inside)
+        ShowSetupScreen();
+    }
 
     private void ShowSetupScreen()
     {

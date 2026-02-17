@@ -50,7 +50,7 @@ public class GameState
     };
 
     // ---- Economy ----
-    [JsonPropertyName("ledger")] public List<Dictionary<string, object>> Ledger { get; set; } = new();
+    [JsonPropertyName("ledger")] public List<Dictionary<string, object?>> Ledger { get; set; } = new();
     [JsonPropertyName("cure_prices")] public Dictionary<string, int> CurePrices { get; set; } = new();
     [JsonPropertyName("remedies")] public Dictionary<string, int> Remedies { get; set; } = new();
 
@@ -64,9 +64,9 @@ public class GameState
     [JsonPropertyName("route_choice")] public string RouteChoice { get; set; } = "";
 
     // ---- Events / State ----
-    [JsonPropertyName("last_event")] public Dictionary<string, object> LastEvent { get; set; } = new();
+    [JsonPropertyName("last_event")] public Dictionary<string, object?> LastEvent { get; set; } = new();
     [JsonPropertyName("last_card")] public string LastCard { get; set; } = "";
-    [JsonPropertyName("stop_flags")] public Dictionary<string, object> StopFlags { get; set; } = new();
+    [JsonPropertyName("stop_flags")] public Dictionary<string, object?> StopFlags { get; set; } = new();
 
     // ---- Fail state counters ----
     [JsonPropertyName("all_unconscious_days")] public int AllUnconsciousDays { get; set; } = 0;
@@ -74,7 +74,7 @@ public class GameState
     [JsonPropertyName("stranded_days")] public int StrandedDays { get; set; } = 0;
 
     // ---- Encounter / bonus timers ----
-    [JsonPropertyName("pending_encounter")] public Dictionary<string, object>? PendingEncounter { get; set; }
+    [JsonPropertyName("pending_encounter")] public Dictionary<string, object?>? PendingEncounter { get; set; }
     [JsonPropertyName("free_ferry_uses")] public int FreeFerryUses { get; set; } = 0;
     [JsonPropertyName("guidance_until")] public int GuidanceUntil { get; set; } = 0;
     [JsonPropertyName("terrain_warning_until")] public int TerrainWarningUntil { get; set; } = 0;
@@ -82,7 +82,7 @@ public class GameState
     [JsonPropertyName("river_notes_until")] public int RiverNotesUntil { get; set; } = 0;
     [JsonPropertyName("river_notes_bad_until")] public int RiverNotesBadUntil { get; set; } = 0;
     [JsonPropertyName("river_notes_target")] public string RiverNotesTarget { get; set; } = "";
-    [JsonPropertyName("prevent_event_once")] public Dictionary<string, object>? PreventEventOnce { get; set; }
+    [JsonPropertyName("prevent_event_once")] public Dictionary<string, object?>? PreventEventOnce { get; set; }
     [JsonPropertyName("bad_intel_until")] public int BadIntelUntil { get; set; } = 0;
     [JsonPropertyName("bad_intel_kind")] public string BadIntelKind { get; set; } = "";
     [JsonPropertyName("bad_intel_source")] public string BadIntelSource { get; set; } = "";
@@ -95,9 +95,9 @@ public class GameState
     // ---- Pending actions ----
     [JsonPropertyName("pending_stop_type")] public string? PendingStopType { get; set; }
     [JsonPropertyName("pending_stop_key")] public string? PendingStopKey { get; set; }
-    [JsonPropertyName("pending_repair")] public Dictionary<string, object>? PendingRepair { get; set; }
+    [JsonPropertyName("pending_repair")] public Dictionary<string, object?>? PendingRepair { get; set; }
     [JsonPropertyName("forced_rest_days")] public int ForcedRestDays { get; set; } = 0;
-    [JsonPropertyName("pending_weather")] public Dictionary<string, object>? PendingWeather { get; set; }
+    [JsonPropertyName("pending_weather")] public Dictionary<string, object?>? PendingWeather { get; set; }
 
     // ---- Location tracking ----
     [JsonPropertyName("visited_landmarks")] public List<string> VisitedLandmarks { get; set; } = new();
@@ -114,7 +114,7 @@ public class GameState
     [JsonPropertyName("blacksmith_vouchers")] public int BlacksmithVouchers { get; set; } = 0;
 
     // ---- Town/Store state ----
-    [JsonPropertyName("fort_trade_offers")] public List<Dictionary<string, object>> FortTradeOffers { get; set; } = new();
+    [JsonPropertyName("fort_trade_offers")] public List<Dictionary<string, object?>> FortTradeOffers { get; set; } = new();
     public string AtTownName { get; set; } = "";
     public string AtTownStoreKey { get; set; } = "";
     public Dictionary<string, float> StorePriceMult { get; set; } = new();
@@ -122,7 +122,7 @@ public class GameState
     public Dictionary<string, float> StorePriceCache { get; set; } = new();
 
     // ---- Journal ----
-    [JsonPropertyName("journal")] public List<Dictionary<string, object>> Journal { get; set; } = new();
+    [JsonPropertyName("journal")] public List<Dictionary<string, object?>> Journal { get; set; } = new();
     [JsonPropertyName("journal_seq")] public int JournalSeq { get; set; } = 0;
     public int LastNoteNudgeDay { get; set; } = 0;
     public Dictionary<string, float> TempStorePriceMultByStore { get; set; } = new();
