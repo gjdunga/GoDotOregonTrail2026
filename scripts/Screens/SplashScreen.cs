@@ -67,7 +67,7 @@ public partial class SplashScreen : Control
         // Logo (centered, fits window, fades in)
         _logo = new TextureRect
         {
-            Texture = GD.Load<Texture2D>("res://assets/images/ui/logo_oregon_trail_2026.webp"),
+            Texture = GD.Load<Texture2D>("res://assets/images/ui/logo_oregon_trail_2026.png"),
             ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
             Modulate = new Color(1, 1, 1, 0),

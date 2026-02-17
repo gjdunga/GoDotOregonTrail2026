@@ -60,7 +60,7 @@ public partial class MainMenuScreen : Control
         // Logo
         var logo = new TextureRect
         {
-            Texture = GD.Load<Texture2D>("res://assets/images/ui/logo_oregon_trail_2026.webp"),
+            Texture = GD.Load<Texture2D>("res://assets/images/ui/logo_oregon_trail_2026.png"),
             ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
             CustomMinimumSize = new Vector2(0, 220),
