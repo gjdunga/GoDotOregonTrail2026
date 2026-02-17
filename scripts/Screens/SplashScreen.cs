@@ -82,6 +82,18 @@ public partial class SplashScreen : Control
         _logo.SetOffset(Side.Bottom, 0);
         AddChild(_logo);
 
+        // Bar background (empty bar area, sits behind the fill)
+        var barBg = new ColorRect { Color = UIKit.ColParchment };
+        barBg.SetAnchor(Side.Left, 0.2f);
+        barBg.SetAnchor(Side.Right, 0.8f);
+        barBg.SetAnchor(Side.Top, 0.74f);
+        barBg.SetAnchor(Side.Bottom, 0.74f);
+        barBg.SetOffset(Side.Left, 38);
+        barBg.SetOffset(Side.Top, 10);
+        barBg.SetOffset(Side.Right, -38);
+        barBg.SetOffset(Side.Bottom, 36);
+        AddChild(barBg);
+
         // Bar fill (warm goldenrod, rendered UNDER the frame so borders overlay it)
         _barFill = new ColorRect { Color = new Color("B8860B") };
         _barFill.SetAnchor(Side.Left, 0.2f);
