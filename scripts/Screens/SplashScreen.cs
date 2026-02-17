@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using Godot;
 using OregonTrail2026.Models;
