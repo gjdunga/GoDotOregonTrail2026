@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using OregonTrail2026.Models;
 
@@ -173,6 +174,9 @@ public partial class GameManager : Node
         {
             State.VisitedLandmarks.Add(townName);
         }
+
+        // Auto-save on fort/town arrival
+        SaveFileSystem.AutoSave(State);
     }
 
     public void LeaveTown()
@@ -200,28 +204,52 @@ public partial class GameManager : Node
     }
 
     // ========================================================================
-    // SAVE / LOAD
+    // SAVE / LOAD (encrypted archive system)
     // ========================================================================
 
-    public void SaveGame(string path)
+    /// <summary>Current manual slot being used (set by save/load screen).</summary>
+    public string ActiveSlotId { get; set; } = "0";
+
+    /// <summary>Save to a manual slot.</summary>
+    public bool SaveGame(string slotId, string slotName = "")
     {
-        string json = State.ToJson();
-        using var file = FileAccess.Open(path, FileAccess.ModeFlags.Write);
-        file?.StoreString(json);
-        GD.Print($"[GameManager] Game saved to {path}");
+        bool ok = SaveFileSystem.Save(slotId, State, slotName);
+        if (ok) ActiveSlotId = slotId;
+        return ok;
     }
 
-    public bool LoadGame(string path)
+    /// <summary>Load from any slot (manual or auto).</summary>
+    public (bool Success, string Message) LoadGame(string slotId)
     {
-        if (!FileAccess.FileExists(path)) return false;
-        using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
-        string json = file?.GetAsText() ?? "";
-        if (string.IsNullOrEmpty(json)) return false;
+        var (state, msg) = SaveFileSystem.Load(slotId);
+        if (state == null) return (false, msg);
 
-        State = GameState.FromJson(json);
+        State = state;
+        ActiveSlotId = slotId;
         EmitSignal(SignalName.StateChanged);
-        GD.Print($"[GameManager] Game loaded from {path}");
-        return true;
+        GD.Print($"[GameManager] Game loaded from slot '{slotId}'");
+        return (true, msg);
+    }
+
+    /// <summary>Quick-save to the currently active manual slot.</summary>
+    public bool QuickSave() => SaveGame(ActiveSlotId);
+
+    // ========================================================================
+    // AUTO-SAVE TRIGGERS
+    // ========================================================================
+
+    /// <summary>Call when entering a hunting minigame.</summary>
+    public void OnHuntStart()
+    {
+        SaveFileSystem.AutoSave(State);
+        GD.Print("[GameManager] Auto-saved before hunt.");
+    }
+
+    /// <summary>Call when entering a fishing minigame.</summary>
+    public void OnFishStart()
+    {
+        SaveFileSystem.AutoSave(State);
+        GD.Print("[GameManager] Auto-saved before fish.");
     }
 
     // ========================================================================

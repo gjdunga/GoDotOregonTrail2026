@@ -303,7 +303,7 @@ public partial class MainScene : Control
                 ShowMessage($"YOU CAUGHT {fish} LBS OF FISH.");
                 break;
             case 7: // Save
-                gm.SaveGame("user://savegame.json");
+                gm.QuickSave();
                 ShowMessage("GAME SAVED.");
                 break;
             case 8: // Roles

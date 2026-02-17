@@ -190,7 +190,7 @@ public static class TravelSystem
         var river = NextUncrossedRiverBetween(st, a, b);
 
         if (town != null && river != null)
-            return town.Value.Miles <= river.Value.Miles ? ("town", town) : ("river", river);
+            return town.Miles <= river.Miles ? ("town", town) : ("river", river);
         if (town != null) return ("town", town);
         if (river != null) return ("river", river);
         return (null, null);
