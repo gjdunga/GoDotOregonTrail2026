@@ -47,8 +47,8 @@ public partial class MainMenuScreen : Control
         {
             Alignment = BoxContainer.AlignmentMode.Center,
         };
-        center.SetAnchor(Side.Left, 0.25f);
-        center.SetAnchor(Side.Right, 0.75f);
+        center.SetAnchor(Side.Left, 0.3f);
+        center.SetAnchor(Side.Right, 0.7f);
         center.SetAnchor(Side.Top, 0.05f);
         center.SetAnchor(Side.Bottom, 0.95f);
         center.SetOffset(Side.Left, 0);
@@ -57,13 +57,13 @@ public partial class MainMenuScreen : Control
         center.SetOffset(Side.Bottom, 0);
         AddChild(center);
 
-        // Logo (smaller for menu, ~35% height)
+        // Logo
         var logo = new TextureRect
         {
             Texture = GD.Load<Texture2D>("res://assets/images/ui/logo_oregon_trail_2026.webp"),
             ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-            CustomMinimumSize = new Vector2(0, 200),
+            CustomMinimumSize = new Vector2(0, 220),
         };
         center.AddChild(logo);
 
@@ -127,61 +127,66 @@ public partial class MainMenuScreen : Control
 
     private void OnGraphicsPressed()
     {
-        if (_settingsPanel != null) CloseSettingsPanel();
-
-        _settingsPanel = new PanelContainer();
-        var style = new StyleBoxFlat
+        GD.Print("[MainMenu] Graphics pressed");
+        try
         {
-            BgColor = new Color(UIKit.ColDarkBrown, 0.92f),
-            BorderColor = UIKit.ColAmberDim,
-            BorderWidthLeft = 2, BorderWidthRight = 2,
-            BorderWidthTop = 2, BorderWidthBottom = 2,
-            CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4,
-            CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4,
-            ContentMarginLeft = 24, ContentMarginRight = 24,
-            ContentMarginTop = 16, ContentMarginBottom = 16,
-        };
-        ((PanelContainer)_settingsPanel).AddThemeStyleboxOverride("panel", style);
+            if (_settingsPanel != null) CloseSettingsPanel();
 
-        var vbox = new VBoxContainer();
-        vbox.AddThemeConstantOverride("separation", 12);
+            _settingsPanel = new PanelContainer();
+            var style = new StyleBoxFlat
+            {
+                BgColor = new Color(UIKit.ColDarkBrown, 0.92f),
+                BorderColor = UIKit.ColAmberDim,
+                BorderWidthLeft = 2, BorderWidthRight = 2,
+                BorderWidthTop = 2, BorderWidthBottom = 2,
+                CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4,
+                CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4,
+                ContentMarginLeft = 24, ContentMarginRight = 24,
+                ContentMarginTop = 16, ContentMarginBottom = 16,
+            };
+            ((PanelContainer)_settingsPanel).AddThemeStyleboxOverride("panel", style);
 
-        // Title
-        var title = UIKit.MakeDisplayLabel(Tr(TK.MenuGraphics), 22);
-        vbox.AddChild(title);
+            var vbox = new VBoxContainer();
+            vbox.AddThemeConstantOverride("separation", 12);
 
-        // Fullscreen toggle
-        var fsRow = new HBoxContainer();
-        var fsLabel = UIKit.MakeBodyLabel(Tr(TK.SettingsFullscreen), 16, UIKit.ColParchment);
-        fsLabel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-        fsRow.AddChild(fsLabel);
+            // Title
+            var title = UIKit.MakeDisplayLabel(Tr(TK.MenuGraphics), 22);
+            vbox.AddChild(title);
 
-        var fsToggle = new CheckButton();
-        fsToggle.ButtonPressed = OregonTrail2026.Systems.SettingsManager.Instance.Fullscreen;
-        fsToggle.Toggled += (on) => OregonTrail2026.Systems.SettingsManager.Instance.Fullscreen = on;
-        fsRow.AddChild(fsToggle);
-        vbox.AddChild(fsRow);
+            // Fullscreen toggle
+            var fsRow = new HBoxContainer();
+            var fsLabel = UIKit.MakeBodyLabel(Tr(TK.SettingsFullscreen), 16, UIKit.ColParchment);
+            fsLabel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            fsRow.AddChild(fsLabel);
 
-        // Back button
-        var btnBack = UIKit.MakeSecondaryButton(Tr(TK.SettingsBack), 16);
-        btnBack.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
-        btnBack.Pressed += CloseSettingsPanel;
-        vbox.AddChild(btnBack);
+            var fsToggle = new CheckButton();
+            fsToggle.ButtonPressed = OregonTrail2026.Systems.SettingsManager.Instance.Fullscreen;
+            fsToggle.Toggled += (on) => OregonTrail2026.Systems.SettingsManager.Instance.Fullscreen = on;
+            fsRow.AddChild(fsToggle);
+            vbox.AddChild(fsRow);
 
-        ((PanelContainer)_settingsPanel).AddChild(vbox);
+            // Back button
+            var btnBack = UIKit.MakeSecondaryButton(Tr(TK.SettingsBack), 16);
+            btnBack.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+            btnBack.Pressed += CloseSettingsPanel;
+            vbox.AddChild(btnBack);
 
-        // Position overlay in center
-        _settingsPanel.SetAnchor(Side.Left, 0.25f);
-        _settingsPanel.SetAnchor(Side.Right, 0.75f);
-        _settingsPanel.SetAnchor(Side.Top, 0.3f);
-        _settingsPanel.SetAnchor(Side.Bottom, 0.7f);
-        _settingsPanel.SetOffset(Side.Left, 0);
-        _settingsPanel.SetOffset(Side.Right, 0);
-        _settingsPanel.SetOffset(Side.Top, 0);
-        _settingsPanel.SetOffset(Side.Bottom, 0);
+            ((PanelContainer)_settingsPanel).AddChild(vbox);
 
-        AddChild(_settingsPanel);
-        _menuButtons.Visible = false;
+            // Position overlay in center
+            _settingsPanel.SetAnchor(Side.Left, 0.25f);
+            _settingsPanel.SetAnchor(Side.Right, 0.75f);
+            _settingsPanel.SetAnchor(Side.Top, 0.3f);
+            _settingsPanel.SetAnchor(Side.Bottom, 0.7f);
+
+            AddChild(_settingsPanel);
+            _menuButtons.Visible = false;
+            GD.Print("[MainMenu] Graphics panel shown");
+        }
+        catch (Exception e)
+        {
+            GD.PrintErr($"[MainMenu] Graphics error: {e}");
+        }
     }
 
     // ========================================================================
@@ -190,61 +195,60 @@ public partial class MainMenuScreen : Control
 
     private void OnSoundPressed()
     {
-        if (_settingsPanel != null) CloseSettingsPanel();
-
-        _settingsPanel = new PanelContainer();
-        var style = new StyleBoxFlat
+        GD.Print("[MainMenu] Sound pressed");
+        try
         {
-            BgColor = new Color(UIKit.ColDarkBrown, 0.92f),
-            BorderColor = UIKit.ColAmberDim,
-            BorderWidthLeft = 2, BorderWidthRight = 2,
-            BorderWidthTop = 2, BorderWidthBottom = 2,
-            CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4,
-            CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4,
-            ContentMarginLeft = 24, ContentMarginRight = 24,
-            ContentMarginTop = 16, ContentMarginBottom = 16,
-        };
-        ((PanelContainer)_settingsPanel).AddThemeStyleboxOverride("panel", style);
+            if (_settingsPanel != null) CloseSettingsPanel();
 
-        var vbox = new VBoxContainer();
-        vbox.AddThemeConstantOverride("separation", 12);
+            _settingsPanel = new PanelContainer();
+            var style = new StyleBoxFlat
+            {
+                BgColor = new Color(UIKit.ColDarkBrown, 0.92f),
+                BorderColor = UIKit.ColAmberDim,
+                BorderWidthLeft = 2, BorderWidthRight = 2,
+                BorderWidthTop = 2, BorderWidthBottom = 2,
+                CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4,
+                CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4,
+                ContentMarginLeft = 24, ContentMarginRight = 24,
+                ContentMarginTop = 16, ContentMarginBottom = 16,
+            };
+            ((PanelContainer)_settingsPanel).AddThemeStyleboxOverride("panel", style);
 
-        var title = UIKit.MakeDisplayLabel(Tr(TK.MenuSound), 22);
-        vbox.AddChild(title);
+            var vbox = new VBoxContainer();
+            vbox.AddThemeConstantOverride("separation", 12);
 
-        var sm = OregonTrail2026.Systems.SettingsManager.Instance;
+            var title = UIKit.MakeDisplayLabel(Tr(TK.MenuSound), 22);
+            vbox.AddChild(title);
 
-        // Master volume slider
-        vbox.AddChild(MakeVolumeRow(Tr(TK.SettingsMasterVol), sm.MasterVolume,
-            v => sm.MasterVolume = v));
+            var sm = OregonTrail2026.Systems.SettingsManager.Instance;
 
-        // Music volume slider
-        vbox.AddChild(MakeVolumeRow(Tr(TK.SettingsMusicVol), sm.MusicVolume,
-            v => sm.MusicVolume = v));
+            vbox.AddChild(MakeVolumeRow(Tr(TK.SettingsMasterVol), sm.MasterVolume,
+                v => sm.MasterVolume = v));
+            vbox.AddChild(MakeVolumeRow(Tr(TK.SettingsMusicVol), sm.MusicVolume,
+                v => sm.MusicVolume = v));
+            vbox.AddChild(MakeVolumeRow(Tr(TK.SettingsSfxVol), sm.SfxVolume,
+                v => sm.SfxVolume = v));
 
-        // SFX volume slider
-        vbox.AddChild(MakeVolumeRow(Tr(TK.SettingsSfxVol), sm.SfxVolume,
-            v => sm.SfxVolume = v));
+            var btnBack = UIKit.MakeSecondaryButton(Tr(TK.SettingsBack), 16);
+            btnBack.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+            btnBack.Pressed += CloseSettingsPanel;
+            vbox.AddChild(btnBack);
 
-        // Back button
-        var btnBack = UIKit.MakeSecondaryButton(Tr(TK.SettingsBack), 16);
-        btnBack.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
-        btnBack.Pressed += CloseSettingsPanel;
-        vbox.AddChild(btnBack);
+            ((PanelContainer)_settingsPanel).AddChild(vbox);
 
-        ((PanelContainer)_settingsPanel).AddChild(vbox);
+            _settingsPanel.SetAnchor(Side.Left, 0.2f);
+            _settingsPanel.SetAnchor(Side.Right, 0.8f);
+            _settingsPanel.SetAnchor(Side.Top, 0.2f);
+            _settingsPanel.SetAnchor(Side.Bottom, 0.8f);
 
-        _settingsPanel.SetAnchor(Side.Left, 0.2f);
-        _settingsPanel.SetAnchor(Side.Right, 0.8f);
-        _settingsPanel.SetAnchor(Side.Top, 0.2f);
-        _settingsPanel.SetAnchor(Side.Bottom, 0.8f);
-        _settingsPanel.SetOffset(Side.Left, 0);
-        _settingsPanel.SetOffset(Side.Right, 0);
-        _settingsPanel.SetOffset(Side.Top, 0);
-        _settingsPanel.SetOffset(Side.Bottom, 0);
-
-        AddChild(_settingsPanel);
-        _menuButtons.Visible = false;
+            AddChild(_settingsPanel);
+            _menuButtons.Visible = false;
+            GD.Print("[MainMenu] Sound panel shown");
+        }
+        catch (Exception e)
+        {
+            GD.PrintErr($"[MainMenu] Sound error: {e}");
+        }
     }
 
     private static HBoxContainer MakeVolumeRow(string label, float initialValue, Action<float> onChange)
