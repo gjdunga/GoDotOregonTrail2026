@@ -95,3 +95,21 @@ GoDotOregonTrail2026/
 1. Open project.godot in Godot 4.3+ (.NET edition)
 2. Build C# solution (Build > Build Solution, or `dotnet build`)
 3. Press F5 to run
+
+## Smart Branch Merge Workflow
+
+If you have two branches and want a safer merge pass, use the helper script:
+
+```bash
+./tools_smart_merge_review.sh <branch-a> <branch-b>
+```
+
+The script prints:
+- commits unique to each branch,
+- files touched by both branches (highest conflict risk),
+- files unique to each branch.
+
+Suggested flow:
+1. Run the script and review the "changed in both branches" list.
+2. Merge with `git merge --no-ff <other-branch>`.
+3. Resolve overlapping files first, then run your normal build/tests.
