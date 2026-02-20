@@ -46,6 +46,7 @@ public partial class MainScene : Control
     private SplashScreen? _splashScreen;
     private MainMenuScreen? _mainMenuScreen;
     private PartySetupScreen? _partySetupScreen;
+    private SaveSlotScreen? _saveSlotScreen;
     private DevConsole? _devConsole;
 
     public override void _Ready()
@@ -139,29 +140,70 @@ public partial class MainScene : Control
 
     private void OnLoadGameRequested()
     {
-        // TODO: Show save/load slot selection screen
-        // For now, attempt to load auto-save
-        var (state, msg) = SaveFileSystem.Load("auto");
+        RemoveMainMenu();
+        ShowSaveSlotScreen(SaveSlotScreen.Mode.Load);
+    }
+
+    private void OnDeleteGameRequested()
+    {
+        RemoveMainMenu();
+        ShowSaveSlotScreen(SaveSlotScreen.Mode.Delete);
+    }
+
+    // ========================================================================
+    // SAVE SLOT SCREEN
+    // ========================================================================
+
+    private void ShowSaveSlotScreen(SaveSlotScreen.Mode mode)
+    {
+        _saveSlotScreen = new SaveSlotScreen(mode);
+        AddChild(_saveSlotScreen);
+        _saveSlotScreen.SlotSelected += OnSaveSlotSelected;
+        _saveSlotScreen.BackRequested += OnSaveSlotBack;
+    }
+
+    private void RemoveSaveSlotScreen()
+    {
+        if (_saveSlotScreen != null)
+        {
+            _saveSlotScreen.SlotSelected -= OnSaveSlotSelected;
+            _saveSlotScreen.BackRequested -= OnSaveSlotBack;
+            _saveSlotScreen.QueueFree();
+            _saveSlotScreen = null;
+        }
+    }
+
+    private void OnSaveSlotSelected(string slotId)
+    {
+        GD.Print($"[MainScene] Loading slot '{slotId}'");
+        var (state, msg) = SaveFileSystem.Load(slotId);
         if (state != null)
         {
-            RemoveMainMenu();
+            RemoveSaveSlotScreen();
             GameManager.Instance.LoadFromState(state);
             ShowHUD();
             _flowState = FlowState.AwaitChoice;
             UpdateHUD();
             ShowChoiceMenuHint();
             PlayMusic("res://assets/audio/OregonTrail2026_Travel_Score_V1a.mp3");
+
+            if (msg != "OK")
+            {
+                // Recovered from backup
+                ShowMessage(Tr(TK.SaveCorruptRecov));
+            }
         }
         else
         {
-            GD.Print($"[MainScene] Load failed: {msg}");
+            // Stay on slot screen, log the error
+            GD.PrintErr($"[MainScene] Load failed for slot '{slotId}': {msg}");
         }
     }
 
-    private void OnDeleteGameRequested()
+    private void OnSaveSlotBack()
     {
-        // TODO: Show save slot selection for deletion
-        GD.Print("[MainScene] Delete game requested (not yet implemented)");
+        RemoveSaveSlotScreen();
+        ShowMainMenu();
     }
 
     // ========================================================================
