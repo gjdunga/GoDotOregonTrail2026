@@ -22,9 +22,13 @@ namespace OregonTrail2026.Screens;
 /// </summary>
 public partial class MainScene : Control
 {
-    // Node references
+    // Node references (from .tscn)
     private TextureRect _background = null!;
     private AudioStreamPlayer _audioPlayer = null!;
+
+    // Code-built UI
+    private CanvasLayer _uiLayer = null!;
+    private Control _hud = null!;
     private PanelContainer _messagePanel = null!;
     private Label _messageLabel = null!;
     private Label _dateLabel = null!;
@@ -52,17 +56,12 @@ public partial class MainScene : Control
 
     public override void _Ready()
     {
-        // Get node references
+        // Get .tscn node references
         _background = GetNode<TextureRect>("Background");
         _audioPlayer = GetNode<AudioStreamPlayer>("AudioPlayer");
-        _messagePanel = GetNode<PanelContainer>("UILayer/MessagePanel");
-        _messageLabel = GetNode<Label>("UILayer/MessagePanel/MessageLabel");
-        _dateLabel = GetNode<Label>("UILayer/HUD/TopBar/DateLabel");
-        _weatherLabel = GetNode<Label>("UILayer/HUD/TopBar/WeatherLabel");
-        _milesLabel = GetNode<Label>("UILayer/HUD/TopBar/MilesLabel");
-        _cashLabel = GetNode<Label>("UILayer/HUD/TopBar/CashLabel");
-        _foodLabel = GetNode<Label>("UILayer/HUD/TopBar/FoodLabel");
-        _healthLabel = GetNode<Label>("UILayer/HUD/TopBar/HealthLabel");
+
+        // Build UI layer in code (replaces old .tscn UILayer)
+        BuildUILayer();
 
         // Connect to GameManager signals
         GameManager.Instance.StateChanged += OnStateChanged;
@@ -73,6 +72,136 @@ public partial class MainScene : Control
 
         // Start with splash screen
         ShowSplashScreen();
+    }
+
+    // ========================================================================
+    // UI CONSTRUCTION
+    // ========================================================================
+
+    private void BuildUILayer()
+    {
+        _uiLayer = new CanvasLayer { Layer = 10 };
+        AddChild(_uiLayer);
+
+        // ---- HUD (top bar) ----
+        _hud = new Control();
+        _hud.SetAnchorsAndOffsetsPreset(LayoutPreset.TopWide);
+        _hud.SetOffset(Side.Bottom, 52);
+        _hud.Visible = false;
+        _uiLayer.AddChild(_hud);
+
+        // Dark bar background
+        var hudBg = new PanelContainer();
+        hudBg.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        var hudStyle = new StyleBoxFlat
+        {
+            BgColor = new Color(0, 0, 0, 0.7f),
+            ContentMarginLeft = 16, ContentMarginRight = 16,
+            ContentMarginTop = 6, ContentMarginBottom = 6,
+            BorderColor = new Color(UIKit.ColAmberDim, 0.5f),
+            BorderWidthBottom = 1,
+        };
+        hudBg.AddThemeStyleboxOverride("panel", hudStyle);
+        _hud.AddChild(hudBg);
+
+        var hudRow = new HBoxContainer();
+        hudRow.AddThemeConstantOverride("separation", 24);
+        hudRow.Alignment = BoxContainer.AlignmentMode.Center;
+        hudBg.AddChild(hudRow);
+
+        // Font for HUD
+        var bodyFont = GD.Load<Font>("res://assets/fonts/NotoSans-Variable.ttf");
+        var displayFont = GD.Load<Font>("res://assets/fonts/Federant-Regular.ttf");
+
+        // Date (display font, amber)
+        _dateLabel = MakeHudLabel("APR 1", 18, displayFont, UIKit.ColAmber);
+        hudRow.AddChild(_dateLabel);
+
+        // Separator
+        hudRow.AddChild(MakeHudSep());
+
+        // Weather
+        _weatherLabel = MakeHudLabel("CLEAR", 14, bodyFont, UIKit.ColParchment);
+        hudRow.AddChild(_weatherLabel);
+
+        hudRow.AddChild(MakeHudSep());
+
+        // Miles
+        _milesLabel = MakeHudLabel("MILES: 0/2170", 14, bodyFont, UIKit.ColParchment);
+        hudRow.AddChild(_milesLabel);
+
+        hudRow.AddChild(MakeHudSep());
+
+        // Cash
+        _cashLabel = MakeHudLabel("$0.00", 14, bodyFont, UIKit.ColAmber);
+        hudRow.AddChild(_cashLabel);
+
+        hudRow.AddChild(MakeHudSep());
+
+        // Food
+        _foodLabel = MakeHudLabel("FOOD: 0", 14, bodyFont, UIKit.ColParchment);
+        hudRow.AddChild(_foodLabel);
+
+        hudRow.AddChild(MakeHudSep());
+
+        // Health
+        _healthLabel = MakeHudLabel("HEALTH: GOOD", 14, bodyFont, UIKit.ColGreen);
+        hudRow.AddChild(_healthLabel);
+
+        // ---- MESSAGE PANEL (bottom center) ----
+        _messagePanel = new PanelContainer();
+        _messagePanel.Visible = false;
+        _messagePanel.SetAnchor(Side.Left, 0.15f);
+        _messagePanel.SetAnchor(Side.Right, 0.85f);
+        _messagePanel.SetAnchor(Side.Top, 1.0f);
+        _messagePanel.SetAnchor(Side.Bottom, 1.0f);
+        _messagePanel.SetOffset(Side.Top, -140);
+        _messagePanel.SetOffset(Side.Bottom, -16);
+        _messagePanel.SetOffset(Side.Left, 0);
+        _messagePanel.SetOffset(Side.Right, 0);
+
+        var msgStyle = new StyleBoxFlat
+        {
+            BgColor = new Color(0, 0, 0, 0.8f),
+            BorderColor = new Color(UIKit.ColAmberDim, 0.6f),
+            BorderWidthLeft = 1, BorderWidthRight = 1,
+            BorderWidthTop = 1, BorderWidthBottom = 1,
+            CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4,
+            CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4,
+            ContentMarginLeft = 20, ContentMarginRight = 20,
+            ContentMarginTop = 12, ContentMarginBottom = 12,
+        };
+        _messagePanel.AddThemeStyleboxOverride("panel", msgStyle);
+
+        _messageLabel = new Label
+        {
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
+        _messageLabel.AddThemeFontOverride("font", bodyFont);
+        _messageLabel.AddThemeFontSizeOverride("font_size", 16);
+        _messageLabel.AddThemeColorOverride("font_color", UIKit.ColParchment);
+        _messagePanel.AddChild(_messageLabel);
+
+        _uiLayer.AddChild(_messagePanel);
+    }
+
+    private static Label MakeHudLabel(string text, int size, Font font, Color color)
+    {
+        var label = new Label { Text = text };
+        label.AddThemeFontOverride("font", font);
+        label.AddThemeFontSizeOverride("font_size", size);
+        label.AddThemeColorOverride("font_color", color);
+        return label;
+    }
+
+    private static VSeparator MakeHudSep()
+    {
+        var sep = new VSeparator();
+        sep.AddThemeConstantOverride("separation", 2);
+        sep.Modulate = new Color(UIKit.ColAmberDim, 0.5f);
+        return sep;
     }
 
     // ========================================================================
@@ -519,9 +648,9 @@ public partial class MainScene : Control
         var gm = GameManager.Instance;
         string location = !string.IsNullOrEmpty(gm.State.AtTownName) ? $" [{gm.State.AtTownName}]" : "";
         ShowMessage(
-            $"WHAT IS YOUR CHOICE?{location}\n" +
-            "1.CONTINUE  2.MAP  3.STORE  4.REST\n" +
-            "5.HUNT  6.FISH  7.SAVE  8.ROLES");
+            $"WHAT IS YOUR CHOICE?{location}\n\n" +
+            "1. CONTINUE TRAIL    2. CHECK MAP    3. VISIT STORE    4. REST\n" +
+            "5. GO HUNTING    6. GO FISHING    7. SAVE GAME    8. ASSIGN ROLES");
     }
 
     // ========================================================================
@@ -530,15 +659,13 @@ public partial class MainScene : Control
 
     private void HideHUD()
     {
-        var hud = GetNodeOrNull("UILayer/HUD");
-        if (hud != null) hud.Set("visible", false);
+        _hud.Visible = false;
         _messagePanel.Visible = false;
     }
 
     private void ShowHUD()
     {
-        var hud = GetNodeOrNull("UILayer/HUD");
-        if (hud != null) hud.Set("visible", true);
+        _hud.Visible = true;
     }
 
     private void SetBackground(string path)
@@ -593,6 +720,16 @@ public partial class MainScene : Control
                 _ => "CRITICAL",
             };
             _healthLabel.Text = $"HEALTH: {healthStr}";
+
+            // Color code health
+            Color healthColor = avgHealth switch
+            {
+                > 800 => UIKit.ColGreen,
+                > 500 => UIKit.ColAmber,
+                > 200 => new Color("CC7733"),
+                _ => UIKit.ColRed,
+            };
+            _healthLabel.AddThemeColorOverride("font_color", healthColor);
         }
     }
 }
