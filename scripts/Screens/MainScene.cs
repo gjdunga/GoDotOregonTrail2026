@@ -47,6 +47,7 @@ public partial class MainScene : Control
     private MainMenuScreen? _mainMenuScreen;
     private PartySetupScreen? _partySetupScreen;
     private SaveSlotScreen? _saveSlotScreen;
+    private IndependenceScreen? _independenceScreen;
     private DevConsole? _devConsole;
 
     public override void _Ready()
@@ -229,18 +230,49 @@ public partial class MainScene : Control
             _partySetupScreen = null;
         }
 
-        ShowHUD();
-
         var nameList = new System.Collections.Generic.List<string>(names);
         GameManager.Instance.StartNewGame(occupation, nameList);
-        GameManager.Instance.EnterTown("Independence");
+
+        ShowIndependenceScreen();
+    }
+
+    // ========================================================================
+    // INDEPENDENCE TOWN SCREEN
+    // ========================================================================
+
+    private void ShowIndependenceScreen()
+    {
+        _flowState = FlowState.Setup; // still in setup phase
+        HideHUD();
 
         SetBackground("res://assets/images/bg/bg_independence_street.webp");
-        ShowMessage("INDEPENDENCE, MISSOURI. 1850.");
-        _messageQueue.Enqueue("YOU MUST BUY SUPPLIES BEFORE YOU LEAVE.");
+
+        _independenceScreen = new IndependenceScreen();
+        _independenceScreen.Initialize(GameManager.Instance.State);
+        AddChild(_independenceScreen);
+        _independenceScreen.DepartureReady += OnDepartureReady;
+    }
+
+    private void OnDepartureReady(int monthOffset)
+    {
+        if (_independenceScreen != null)
+        {
+            _independenceScreen.DepartureReady -= OnDepartureReady;
+            _independenceScreen.QueueFree();
+            _independenceScreen = null;
+        }
+
+        // Already in Independence from StartNewGame. Leave town to start travel.
+        GameManager.Instance.LeaveTown();
+
+        ShowHUD();
+        _flowState = FlowState.AwaitChoice;
+        UpdateHUD();
+
+        ShowMessage("YOUR WAGON IS LOADED. THE TRAIL AWAITS.");
         _messageQueue.Enqueue("[Press SPACE to continue]");
 
-        PlayMusic("res://assets/audio/OregonTrail2026_Main_Menu_Score_V1b.mp3");
+        PlayMusic("res://assets/audio/OregonTrail2026_Travel_Score_V1a.mp3");
     }
 
     // ========================================================================
