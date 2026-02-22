@@ -399,8 +399,7 @@ public partial class MainScene : Control
         _flowState = FlowState.AwaitChoice;
         UpdateHUD();
 
-        ShowMessage("YOUR WAGON IS LOADED. THE TRAIL AWAITS.");
-        _messageQueue.Enqueue("[Press SPACE to continue]");
+        ShowMessage("YOUR WAGON IS LOADED. THE TRAIL AWAITS.\n[Press SPACE to continue]");
 
         PlayMusic("res://assets/audio/OregonTrail2026_Travel_Score_V1a.mp3");
     }
