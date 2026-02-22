@@ -45,6 +45,7 @@ public partial class MainScene : Control
     // Pending message queue
     private readonly Queue<string> _messageQueue = new();
     private bool _awaitingClick = false;
+    private bool _showingChoiceMenu = false;
 
     // Screen references
     private SplashScreen? _splashScreen;
@@ -519,6 +520,18 @@ public partial class MainScene : Control
 
             if (_awaitingClick)
             {
+                // If the choice menu is showing and user presses a number key,
+                // route to the choice handler instead of dismissing
+                if (_showingChoiceMenu && IsNumberKey(keyEvent.Keycode))
+                {
+                    _showingChoiceMenu = false;
+                    _awaitingClick = false;
+                    _messagePanel.Visible = false;
+                    HandleChoiceInput(keyEvent);
+                    GetViewport().SetInputAsHandled();
+                    return;
+                }
+
                 if (_messageQueue.Count > 0)
                 {
                     ShowMessage(_messageQueue.Dequeue());
@@ -527,6 +540,7 @@ public partial class MainScene : Control
                 {
                     _messagePanel.Visible = false;
                     _awaitingClick = false;
+                    _showingChoiceMenu = false;
                     OnMessageDismissed();
                 }
                 GetViewport().SetInputAsHandled();
@@ -557,6 +571,10 @@ public partial class MainScene : Control
             or FlowState.GameOver
             or FlowState.Victory;
     }
+
+    private static bool IsNumberKey(Key keycode) =>
+        keycode is Key.Key1 or Key.Key2 or Key.Key3 or Key.Key4 or Key.Key5
+            or Key.Key6 or Key.Key7 or Key.Key8 or Key.Key9;
 
     private void HandleChoiceInput(InputEventKey key)
     {
@@ -651,6 +669,7 @@ public partial class MainScene : Control
             $"WHAT IS YOUR CHOICE?{location}\n\n" +
             "1. CONTINUE TRAIL    2. CHECK MAP    3. VISIT STORE    4. REST\n" +
             "5. GO HUNTING    6. GO FISHING    7. SAVE GAME    8. ASSIGN ROLES");
+        _showingChoiceMenu = true;
     }
 
     // ========================================================================
@@ -679,6 +698,7 @@ public partial class MainScene : Control
         _messageLabel.Text = text;
         _messagePanel.Visible = true;
         _awaitingClick = true;
+        _showingChoiceMenu = false; // cleared here, set explicitly by ShowChoiceMenuHint
     }
 
     private void PlayMusic(string path)
