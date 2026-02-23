@@ -31,6 +31,7 @@ public partial class MainScene : Control
     private Control _hud = null!;
     private PanelContainer _messagePanel = null!;
     private Label _messageLabel = null!;
+    private Control _choicePanel = null!;
     private Label _dateLabel = null!;
     private Label _weatherLabel = null!;
     private Label _milesLabel = null!;
@@ -45,7 +46,6 @@ public partial class MainScene : Control
     // Pending message queue
     private readonly Queue<string> _messageQueue = new();
     private bool _awaitingClick = false;
-    private bool _showingChoiceMenu = false;
 
     // Screen references
     private SplashScreen? _splashScreen;
@@ -186,6 +186,144 @@ public partial class MainScene : Control
         _messagePanel.AddChild(_messageLabel);
 
         _uiLayer.AddChild(_messagePanel);
+
+        // ---- CHOICE PANEL (bottom center, button grid) ----
+        BuildChoicePanel();
+    }
+
+    private void BuildChoicePanel()
+    {
+        _choicePanel = new PanelContainer();
+        _choicePanel.Visible = false;
+        _choicePanel.SetAnchor(Side.Left, 0.1f);
+        _choicePanel.SetAnchor(Side.Right, 0.9f);
+        _choicePanel.SetAnchor(Side.Top, 1.0f);
+        _choicePanel.SetAnchor(Side.Bottom, 1.0f);
+        _choicePanel.SetOffset(Side.Top, -170);
+        _choicePanel.SetOffset(Side.Bottom, -12);
+        _choicePanel.SetOffset(Side.Left, 0);
+        _choicePanel.SetOffset(Side.Right, 0);
+
+        var panelStyle = new StyleBoxFlat
+        {
+            BgColor = new Color(0, 0, 0, 0.85f),
+            BorderColor = new Color(UIKit.ColAmberDim, 0.6f),
+            BorderWidthLeft = 1, BorderWidthRight = 1,
+            BorderWidthTop = 1, BorderWidthBottom = 1,
+            CornerRadiusTopLeft = 6, CornerRadiusTopRight = 6,
+            CornerRadiusBottomLeft = 6, CornerRadiusBottomRight = 6,
+            ContentMarginLeft = 16, ContentMarginRight = 16,
+            ContentMarginTop = 12, ContentMarginBottom = 12,
+        };
+        ((PanelContainer)_choicePanel).AddThemeStyleboxOverride("panel", panelStyle);
+
+        var vbox = new VBoxContainer();
+        vbox.AddThemeConstantOverride("separation", 8);
+
+        // Title row
+        var titleLabel = UIKit.MakeDisplayLabel("WHAT IS YOUR CHOICE?", 18);
+        titleLabel.HorizontalAlignment = HorizontalAlignment.Center;
+        vbox.AddChild(titleLabel);
+
+        // Button grid: 2 rows x 4 columns
+        var row1 = new HBoxContainer();
+        row1.AddThemeConstantOverride("separation", 8);
+        row1.Alignment = BoxContainer.AlignmentMode.Center;
+
+        var row2 = new HBoxContainer();
+        row2.AddThemeConstantOverride("separation", 8);
+        row2.Alignment = BoxContainer.AlignmentMode.Center;
+
+        // Row 1
+        row1.AddChild(MakeChoiceButton("CONTINUE", 1));
+        row1.AddChild(MakeChoiceButton("CHECK MAP", 2));
+        row1.AddChild(MakeChoiceButton("VISIT STORE", 3));
+        row1.AddChild(MakeChoiceButton("REST", 4));
+
+        // Row 2
+        row2.AddChild(MakeChoiceButton("GO HUNTING", 5));
+        row2.AddChild(MakeChoiceButton("GO FISHING", 6));
+        row2.AddChild(MakeChoiceButton("SAVE GAME", 7));
+        row2.AddChild(MakeChoiceButton("ROLES", 8));
+
+        vbox.AddChild(row1);
+        vbox.AddChild(row2);
+
+        ((PanelContainer)_choicePanel).AddChild(vbox);
+        _uiLayer.AddChild(_choicePanel);
+    }
+
+    private Button MakeChoiceButton(string text, int choiceId)
+    {
+        var btn = new Button
+        {
+            Text = text,
+            CustomMinimumSize = new Vector2(160, 40),
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+        };
+
+        var normalStyle = new StyleBoxFlat
+        {
+            BgColor = new Color(UIKit.ColDarkBrown, 0.9f),
+            BorderColor = UIKit.ColAmberDim,
+            BorderWidthLeft = 1, BorderWidthRight = 1,
+            BorderWidthTop = 1, BorderWidthBottom = 1,
+            CornerRadiusTopLeft = 3, CornerRadiusTopRight = 3,
+            CornerRadiusBottomLeft = 3, CornerRadiusBottomRight = 3,
+            ContentMarginLeft = 8, ContentMarginRight = 8,
+            ContentMarginTop = 4, ContentMarginBottom = 4,
+        };
+        var hoverStyle = new StyleBoxFlat
+        {
+            BgColor = new Color(UIKit.ColAmberDim, 0.6f),
+            BorderColor = UIKit.ColAmber,
+            BorderWidthLeft = 1, BorderWidthRight = 1,
+            BorderWidthTop = 1, BorderWidthBottom = 1,
+            CornerRadiusTopLeft = 3, CornerRadiusTopRight = 3,
+            CornerRadiusBottomLeft = 3, CornerRadiusBottomRight = 3,
+            ContentMarginLeft = 8, ContentMarginRight = 8,
+            ContentMarginTop = 4, ContentMarginBottom = 4,
+        };
+        var pressedStyle = new StyleBoxFlat
+        {
+            BgColor = new Color(UIKit.ColAmber, 0.3f),
+            BorderColor = UIKit.ColAmber,
+            BorderWidthLeft = 1, BorderWidthRight = 1,
+            BorderWidthTop = 1, BorderWidthBottom = 1,
+            CornerRadiusTopLeft = 3, CornerRadiusTopRight = 3,
+            CornerRadiusBottomLeft = 3, CornerRadiusBottomRight = 3,
+            ContentMarginLeft = 8, ContentMarginRight = 8,
+            ContentMarginTop = 4, ContentMarginBottom = 4,
+        };
+
+        btn.AddThemeStyleboxOverride("normal", normalStyle);
+        btn.AddThemeStyleboxOverride("hover", hoverStyle);
+        btn.AddThemeStyleboxOverride("pressed", pressedStyle);
+        btn.AddThemeStyleboxOverride("focus", normalStyle);
+
+        var font = GD.Load<Font>("res://assets/fonts/NotoSans-Variable.ttf");
+        btn.AddThemeFontOverride("font", font);
+        btn.AddThemeFontSizeOverride("font_size", 14);
+        btn.AddThemeColorOverride("font_color", UIKit.ColParchment);
+        btn.AddThemeColorOverride("font_hover_color", UIKit.ColWhite);
+        btn.AddThemeColorOverride("font_pressed_color", UIKit.ColAmber);
+
+        int captured = choiceId;
+        btn.Pressed += () => HandleChoice(captured);
+
+        return btn;
+    }
+
+    private void ShowChoiceMenu()
+    {
+        _messagePanel.Visible = false;
+        _awaitingClick = false;
+        _choicePanel.Visible = true;
+    }
+
+    private void HideChoiceMenu()
+    {
+        _choicePanel.Visible = false;
     }
 
     private static Label MakeHudLabel(string text, int size, Font font, Color color)
@@ -315,7 +453,7 @@ public partial class MainScene : Control
             ShowHUD();
             _flowState = FlowState.AwaitChoice;
             UpdateHUD();
-            ShowChoiceMenuHint();
+            ShowChoiceMenu();
             PlayMusic("res://assets/audio/OregonTrail2026_Travel_Score_V1a.mp3");
 
             if (msg != "OK")
@@ -478,6 +616,10 @@ public partial class MainScene : Control
 
         _flowState = FlowState.AwaitChoice;
         UpdateHUD();
+
+        // If no message was triggered this day, go straight to choice menu
+        if (!_awaitingClick)
+            ShowChoiceMenu();
     }
 
     private void HandleGameEnd(string reason)
@@ -519,18 +661,6 @@ public partial class MainScene : Control
 
             if (_awaitingClick)
             {
-                // If the choice menu is showing and user presses a number key,
-                // route to the choice handler instead of dismissing
-                if (_showingChoiceMenu && IsNumberKey(keyEvent.Keycode))
-                {
-                    _showingChoiceMenu = false;
-                    _awaitingClick = false;
-                    _messagePanel.Visible = false;
-                    HandleChoiceInput(keyEvent);
-                    GetViewport().SetInputAsHandled();
-                    return;
-                }
-
                 if (_messageQueue.Count > 0)
                 {
                     ShowMessage(_messageQueue.Dequeue());
@@ -539,17 +669,10 @@ public partial class MainScene : Control
                 {
                     _messagePanel.Visible = false;
                     _awaitingClick = false;
-                    _showingChoiceMenu = false;
                     OnMessageDismissed();
                 }
                 GetViewport().SetInputAsHandled();
                 return;
-            }
-
-            if (_flowState == FlowState.AwaitChoice)
-            {
-                HandleChoiceInput(keyEvent);
-                GetViewport().SetInputAsHandled();
             }
         }
     }
@@ -571,27 +694,10 @@ public partial class MainScene : Control
             or FlowState.Victory;
     }
 
-    private static bool IsNumberKey(Key keycode) =>
-        keycode is Key.Key1 or Key.Key2 or Key.Key3 or Key.Key4 or Key.Key5
-            or Key.Key6 or Key.Key7 or Key.Key8 or Key.Key9;
-
-    private void HandleChoiceInput(InputEventKey key)
+    private void HandleChoice(int choice)
     {
+        HideChoiceMenu();
         var gm = GameManager.Instance;
-
-        int choice = key.Keycode switch
-        {
-            Key.Key1 => 1,
-            Key.Key2 => 2,
-            Key.Key3 => 3,
-            Key.Key4 => 4,
-            Key.Key5 => 5,
-            Key.Key6 => 6,
-            Key.Key7 => 7,
-            Key.Key8 => 8,
-            Key.Key9 => 9,
-            _ => 0,
-        };
 
         switch (choice)
         {
@@ -607,7 +713,7 @@ public partial class MainScene : Control
                 break;
             case 3:
                 if (!string.IsNullOrEmpty(gm.State.AtTownStoreKey))
-                    ShowMessage("STORE SCREEN - USE S KEY TO BUY SUPPLIES");
+                    ShowMessage("STORE SCREEN: COMING SOON");
                 else
                     ShowMessage("NO STORE HERE.");
                 break;
@@ -651,24 +757,13 @@ public partial class MainScene : Control
         }
         else if (_flowState == FlowState.AwaitChoice)
         {
-            ShowChoiceMenuHint();
+            ShowChoiceMenu();
         }
         else if (_flowState == FlowState.GameOver)
         {
             // Return to main menu after game over
             ShowMainMenu();
         }
-    }
-
-    private void ShowChoiceMenuHint()
-    {
-        var gm = GameManager.Instance;
-        string location = !string.IsNullOrEmpty(gm.State.AtTownName) ? $" [{gm.State.AtTownName}]" : "";
-        ShowMessage(
-            $"WHAT IS YOUR CHOICE?{location}\n\n" +
-            "1. CONTINUE TRAIL    2. CHECK MAP    3. VISIT STORE    4. REST\n" +
-            "5. GO HUNTING    6. GO FISHING    7. SAVE GAME    8. ASSIGN ROLES");
-        _showingChoiceMenu = true;
     }
 
     // ========================================================================
@@ -679,6 +774,7 @@ public partial class MainScene : Control
     {
         _hud.Visible = false;
         _messagePanel.Visible = false;
+        _choicePanel.Visible = false;
     }
 
     private void ShowHUD()
@@ -697,7 +793,7 @@ public partial class MainScene : Control
         _messageLabel.Text = text;
         _messagePanel.Visible = true;
         _awaitingClick = true;
-        _showingChoiceMenu = false; // cleared here, set explicitly by ShowChoiceMenuHint
+        HideChoiceMenu();
     }
 
     private void PlayMusic(string path)
