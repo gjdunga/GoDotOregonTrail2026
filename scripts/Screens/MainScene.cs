@@ -58,6 +58,9 @@ public partial class MainScene : Control
     private HuntScreen? _huntScreen;
     private FishScreen? _fishScreen;
     private RolesScreen? _rolesScreen;
+    private MapScreen? _mapScreen;
+    private VictoryScreen? _victoryScreen;
+    private GameOverScreen? _gameOverScreen;
     private DevConsole? _devConsole;
 
     public override void _Ready()
@@ -597,26 +600,10 @@ public partial class MainScene : Control
         string? fail = GameManager.Instance.CheckFailStates();
         if (fail != null)
         {
-            // Show the crossing result first, then the game-over message on next dismiss.
-            // Set flow state before ShowMessage so OnMessageDismissed routes correctly.
-            _flowState = fail == "chapter_complete" ? FlowState.Victory : FlowState.GameOver;
-            SetBackground("res://assets/images/bg/bg_oregon_city_arrival.webp");
-
-            string gameOverMsg = fail switch
-            {
-                "game_over_dead"        => "EVERYONE IS DEAD.",
-                "game_over_unconscious" => "THE PARTY FELL UNCONSCIOUS AND NEVER RECOVERED.",
-                "game_over_starved"     => "YOU RAN OUT OF FOOD FOR TOO LONG.\nTHE PARTY STARVED ON THE TRAIL.",
-                "game_over_stranded"    => "YOU CANNOT MOVE ON.\nWITHOUT OXEN OR A WORKING WAGON, THE JOURNEY ENDS HERE.",
-                "game_over_time"        => "WINTER CAME. YOU RAN OUT OF TIME.",
-                "chapter_complete"      => "WILLAMETTE VALLEY. YOU MADE IT!\nSURVIVORS CONTINUE TO CHAPTER 2.",
-                _                       => $"GAME OVER: {fail}",
-            };
-
-            // Crossing result -> game over msg -> main menu (two dismissals)
+            // Show crossing result message first, then transition to the
+            // win/loss screen after the player dismisses it.
+            _messageQueue.Enqueue("__game_end__:" + fail);
             ShowMessage(msg);
-            _messageQueue.Enqueue(gameOverMsg);
-            _messageQueue.Enqueue($"MILES TRAVELED: {st.Miles}");
             return;
         }
 
@@ -782,27 +769,18 @@ public partial class MainScene : Control
 
     private void HandleGameEnd(string reason)
     {
-        var gm = GameManager.Instance;
+        HideChoiceMenu();
 
-        // Victory and defeat are distinct flow states. chapter_complete reaches Oregon;
-        // all other reasons are failures. Both currently return to main menu on dismiss,
-        // but Victory can expand to its own screen without touching routing logic.
-        _flowState = reason == "chapter_complete" ? FlowState.Victory : FlowState.GameOver;
-
-        string message = reason switch
+        if (reason == "chapter_complete")
         {
-            "game_over_dead"        => "EVERYONE IS DEAD.",
-            "game_over_unconscious" => "THE PARTY FELL UNCONSCIOUS AND NEVER RECOVERED.",
-            "game_over_starved"     => "YOU RAN OUT OF FOOD FOR TOO LONG.\nTHE PARTY STARVED ON THE TRAIL.",
-            "game_over_stranded"    => "YOU CANNOT MOVE ON.\nWITHOUT OXEN OR A WORKING WAGON, THE JOURNEY ENDS HERE.",
-            "game_over_time"        => "WINTER CAME. YOU RAN OUT OF TIME.",
-            "chapter_complete"      => "WILLAMETTE VALLEY. YOU MADE IT!\nSURVIVORS CONTINUE TO CHAPTER 2.",
-            _                       => $"GAME OVER: {reason}",
-        };
-
-        SetBackground("res://assets/images/bg/bg_oregon_city_arrival.webp");
-        ShowMessage(message);
-        _messageQueue.Enqueue($"MILES TRAVELED: {gm.State.Miles}");
+            _flowState = FlowState.Victory;
+            ShowVictoryScreen();
+        }
+        else
+        {
+            _flowState = FlowState.GameOver;
+            ShowGameOverScreen(reason);
+        }
     }
 
     // ========================================================================
@@ -825,7 +803,17 @@ public partial class MainScene : Control
             {
                 if (_messageQueue.Count > 0)
                 {
-                    ShowMessage(_messageQueue.Dequeue());
+                    string next = _messageQueue.Dequeue();
+                    if (next.StartsWith("__game_end__:"))
+                    {
+                        _messagePanel.Visible = false;
+                        _awaitingClick = false;
+                        HandleGameEnd(next["__game_end__:".Length..]);
+                    }
+                    else
+                    {
+                        ShowMessage(next);
+                    }
                 }
                 else
                 {
@@ -870,8 +858,7 @@ public partial class MainScene : Control
                 ExecuteTravelDay();
                 break;
             case 2:
-                ShowMessage($"MILES: {gm.State.Miles} / {GameConstants.TargetMiles}\n" +
-                           $"TERRAIN: {TravelSystem.TerrainByMiles(gm.State.Miles).ToUpper()}");
+                ShowMapScreen();
                 break;
             case 3:
                 if (!string.IsNullOrEmpty(gm.State.AtTownStoreKey))
@@ -916,12 +903,10 @@ public partial class MainScene : Control
         }
         else if (_flowState == FlowState.GameOver)
         {
-            // Return to main menu after defeat
             ShowMainMenu();
         }
         else if (_flowState == FlowState.Victory)
         {
-            // Return to main menu after victory (placeholder until Victory screen exists)
             ShowMainMenu();
         }
     }
@@ -1016,6 +1001,104 @@ public partial class MainScene : Control
         UpdateHUD();
         _flowState = FlowState.AwaitChoice;
         ShowMessage(msg);
+    }
+
+    // ========================================================================
+    // MAP SCREEN
+    // ========================================================================
+
+    private void ShowMapScreen()
+    {
+        HideChoiceMenu();
+
+        _mapScreen = new MapScreen();
+        _mapScreen.Initialize(GameManager.Instance.State);
+        AddChild(_mapScreen);
+        _mapScreen.MapClosed += OnMapClosed;
+    }
+
+    private void RemoveMapScreen()
+    {
+        if (_mapScreen != null)
+        {
+            _mapScreen.MapClosed -= OnMapClosed;
+            _mapScreen.QueueFree();
+            _mapScreen = null;
+        }
+    }
+
+    private void OnMapClosed()
+    {
+        RemoveMapScreen();
+        ShowChoiceMenu();
+    }
+
+    // ========================================================================
+    // VICTORY SCREEN
+    // ========================================================================
+
+    private void ShowVictoryScreen()
+    {
+        SetBackground("res://assets/images/bg/bg_oregon_city_arrival.webp");
+        HideHUD();
+
+        _victoryScreen = new VictoryScreen();
+        _victoryScreen.Initialize(GameManager.Instance.State);
+        AddChild(_victoryScreen);
+        _victoryScreen.PlayAgainRequested += OnEndScreenPlayAgain;
+        _victoryScreen.MainMenuRequested  += OnEndScreenMainMenu;
+    }
+
+    private void RemoveVictoryScreen()
+    {
+        if (_victoryScreen != null)
+        {
+            _victoryScreen.PlayAgainRequested -= OnEndScreenPlayAgain;
+            _victoryScreen.MainMenuRequested  -= OnEndScreenMainMenu;
+            _victoryScreen.QueueFree();
+            _victoryScreen = null;
+        }
+    }
+
+    // ========================================================================
+    // GAME OVER SCREEN
+    // ========================================================================
+
+    private void ShowGameOverScreen(string reason)
+    {
+        HideHUD();
+
+        _gameOverScreen = new GameOverScreen();
+        _gameOverScreen.Initialize(GameManager.Instance.State, reason);
+        AddChild(_gameOverScreen);
+        _gameOverScreen.PlayAgainRequested += OnEndScreenPlayAgain;
+        _gameOverScreen.MainMenuRequested  += OnEndScreenMainMenu;
+    }
+
+    private void RemoveGameOverScreen()
+    {
+        if (_gameOverScreen != null)
+        {
+            _gameOverScreen.PlayAgainRequested -= OnEndScreenPlayAgain;
+            _gameOverScreen.MainMenuRequested  -= OnEndScreenMainMenu;
+            _gameOverScreen.QueueFree();
+            _gameOverScreen = null;
+        }
+    }
+
+    // Shared end-screen handlers
+    private void OnEndScreenPlayAgain()
+    {
+        RemoveVictoryScreen();
+        RemoveGameOverScreen();
+        ShowSetupScreen(); // re-enter party setup for a fresh run
+    }
+
+    private void OnEndScreenMainMenu()
+    {
+        RemoveVictoryScreen();
+        RemoveGameOverScreen();
+        ShowMainMenu();
     }
 
     // ========================================================================
