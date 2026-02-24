@@ -212,7 +212,7 @@ public partial class FortStoreScreen : Control
 
         // Price
         var priceLabel = UIKit.MakeBodyLabel(
-            soldout ? "SOLD OUT" : $"${unitPrice:F2} {unit}",
+            soldout ? Tr(TK.StoreSoldOut) : $"${unitPrice:F2} {unit}",
             13,
             soldout ? UIKit.ColRed : UIKit.ColGray);
         priceLabel.CustomMinimumSize = new Vector2(130, 0);
@@ -262,7 +262,7 @@ public partial class FortStoreScreen : Control
                 qty = step; // reset qty to step size after purchase
                 qtyLabel.Text = qty.ToString();
                 RefreshStatus();
-                ownedLabel.Text = $"OWNED: {OwnedCount(itemKey)}";
+                ownedLabel.Text = string.Format(Tr(TK.StoreOwned), OwnedCount(itemKey));
             }
             ShowFlash(msg, ok);
         };
@@ -380,37 +380,37 @@ public partial class FortStoreScreen : Control
 
         // Inspection
         _contentRoot.AddChild(BuildServiceRow(
-            "WAGON INSPECTION",
-            $"See exact wagon condition. Current: {wagonPct}%",
+            Tr(TK.SmithInspect),
+            string.Format(Tr(TK.SmithInspectDesc), wagonPct),
             $"${inspectCost:F2}",
             canAfford: _state.Cash >= inspectCost,
             disabled: false,
             onBuy: () =>
             {
-                if (_state.Cash < inspectCost) { ShowFlash("NOT ENOUGH CASH.", false); return; }
+                if (_state.Cash < inspectCost) { ShowFlash(Tr(TK.StoreNoCash), false); return; }
                 _state.Cash -= inspectCost;
                 int wPct = (int)(_state.Wagon / (float)GameConstants.ConditionMaximum * 100f);
                 int oPct = (int)(_state.OxenCondition / (float)GameConstants.ConditionMaximum * 100f);
                 string pending = _state.PendingRepair != null
-                    ? $" BROKEN {(_state.PendingRepair["part"] as string ?? "PART").ToUpper()} FOUND."
+                    ? string.Format(Tr(TK.SmithResultBroken), (_state.PendingRepair["part"] as string ?? "PART").ToUpper())
                     : "";
-                ShowFlash($"WAGON: {wPct}%  OXEN: {oPct}%{pending}", true);
+                ShowFlash(string.Format(Tr(TK.SmithResultWagon), wPct, oPct) + pending, true);
                 RefreshStatus();
             }));
 
         // Full repair
         bool repairNeeded = _state.Wagon < 800 || _state.PendingRepair != null;
         _contentRoot.AddChild(BuildServiceRow(
-            "FIELD REPAIR",
+            Tr(TK.SmithRepair),
             repairNeeded
-                ? $"Guaranteed quality repair. Wagon at {wagonPct}%."
-                : "Wagon is in good condition. Repair not needed.",
+                ? string.Format(Tr(TK.SmithRepairNeeded), wagonPct)
+                : Tr(TK.SmithRepairOk),
             $"${repairCost:F2}",
             canAfford: _state.Cash >= repairCost,
             disabled: !repairNeeded,
             onBuy: () =>
             {
-                if (_state.Cash < repairCost) { ShowFlash("NOT ENOUGH CASH.", false); return; }
+                if (_state.Cash < repairCost) { ShowFlash(Tr(TK.StoreNoCash), false); return; }
                 _state.Cash -= repairCost;
                 string result = RepairSystem.BlacksmithRepair(_state);
                 ShowFlash(result, true);
@@ -420,16 +420,16 @@ public partial class FortStoreScreen : Control
 
         // Tuneup
         _contentRoot.AddChild(BuildServiceRow(
-            "FULL WAGON TUNEUP",
+            Tr(TK.SmithTuneup),
             tuneupActive
-                ? $"Tuneup active until mile {_state.TuneupUntilMiles}. Cannot stack."
-                : $"Reduces breakdown chance for {GameConstants.TuneupDurationMiles} miles.",
+                ? string.Format(Tr(TK.SmithTuneupActive), _state.TuneupUntilMiles)
+                : string.Format(Tr(TK.SmithTuneupDesc), GameConstants.TuneupDurationMiles),
             $"${tuneupCost:F2}",
             canAfford: _state.Cash >= tuneupCost,
             disabled: tuneupActive,
             onBuy: () =>
             {
-                if (_state.Cash < tuneupCost) { ShowFlash("NOT ENOUGH CASH.", false); return; }
+                if (_state.Cash < tuneupCost) { ShowFlash(Tr(TK.StoreNoCash), false); return; }
                 _state.Cash -= tuneupCost;
                 string result = RepairSystem.BlacksmithTuneup(_state);
                 ShowFlash(result, true);
@@ -516,7 +516,7 @@ public partial class FortStoreScreen : Control
 
         int cargo = CargoSystem.CargoWeight(_state);
         int cap   = CargoSystem.CargoCapacity(_state);
-        _weightLabel.Text = $"CARGO: {cargo}/{cap} LBS";
+        _weightLabel.Text = string.Format(Tr(TK.StoreCargo), cargo, cap);
         _weightLabel.AddThemeColorOverride("font_color",
             cargo > cap ? UIKit.ColRed : UIKit.ColGray);
     }

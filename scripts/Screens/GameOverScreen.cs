@@ -212,7 +212,7 @@ public partial class GameOverScreen : Control
             "The Blue Mountains filled with snow. The trail became impassable. " +
             "You waited for a spring that never came in time."),
         _ => (
-            $"FAILED: {reason.Replace("_", " ").ToUpper()}",
+            string.Format(TranslationServer.Translate(TK.GameOverCauseFail), reason.Replace("_", " ").ToUpper()),
             "The Oregon Trail claimed another wagon."),
     };
 

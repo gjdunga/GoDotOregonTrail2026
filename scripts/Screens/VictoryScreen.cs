@@ -77,7 +77,7 @@ public partial class VictoryScreen : Control
         AddCentered(vbox, UIKit.MakeDisplayLabel(Tr(TK.WinLocation), 32, UIKit.ColAmber));
 
         string dateStr = DateCalc.DateStr(_state.Day);
-        AddCentered(vbox, UIKit.MakeBodyLabel($"YOU ARRIVED ON {dateStr}, 1850.", 16, UIKit.ColParchment));
+        AddCentered(vbox, UIKit.MakeBodyLabel(string.Format(Tr(TK.WinArrivalDate), dateStr), 16, UIKit.ColParchment));
         vbox.AddChild(UIKit.MakeDivider());
 
         // ---- SURVIVORS ----
@@ -106,7 +106,7 @@ public partial class VictoryScreen : Control
                 Color hpColor = hpPct >= 70 ? UIKit.ColGreen
                               : hpPct >= 40 ? UIKit.ColAmber
                               : UIKit.ColRed;
-                var hpLbl = UIKit.MakeBodyLabel($"HEALTH {hpPct}%", 12, hpColor);
+                var hpLbl = UIKit.MakeBodyLabel(string.Format(Tr(TK.WinMemberHealth), hpPct), 12, hpColor);
                 hpLbl.HorizontalAlignment = HorizontalAlignment.Center;
 
                 if (!string.IsNullOrEmpty(p.Illness))

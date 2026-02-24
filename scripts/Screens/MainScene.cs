@@ -578,7 +578,7 @@ public partial class MainScene : Control
         _flowState = FlowState.AwaitChoice;
         UpdateHUD();
 
-        ShowMessage("YOUR WAGON IS LOADED. THE TRAIL AWAITS.\n[Press SPACE to continue]");
+        ShowMessage(Tr(TK.TravelWagonLoaded));
 
         PlayMusic("res://assets/audio/OregonTrail2026_Travel_Score_V1a.mp3");
     }
@@ -620,7 +620,7 @@ public partial class MainScene : Control
         // Retrieve result flags written by RiverCrossingScreen before it signalled
         bool success = st.StopFlags.GetValueOrDefault("river_crossing_success") as bool? ?? false;
         string msg   = st.StopFlags.GetValueOrDefault("river_crossing_msg") as string
-                       ?? "THE CROSSING IS DONE.";
+                       ?? Tr(TK.RiverCrossDone);
         st.StopFlags.Remove("river_crossing_success");
         st.StopFlags.Remove("river_crossing_msg");
 
@@ -765,7 +765,7 @@ public partial class MainScene : Control
 
             // Show arrival message with landmark background image
             var lm = Array.Find(GameData.Landmarks, l => l.Name == townName);
-            string arrivalText = lm?.ArrivalText ?? $"YOU HAVE REACHED {townName.ToUpper()}.";
+            string arrivalText = lm?.ArrivalText ?? string.Format(Tr(TK.TravelReachedPlace), townName.ToUpper());
             string? bgImg = lm?.BgImage;
             ShowMessage(arrivalText, bgImg);
 
@@ -790,7 +790,7 @@ public partial class MainScene : Control
                 gm.State.VisitedLandmarks.Add(landmarkName);
 
             var lm = Array.Find(GameData.Landmarks, l => l.Name == landmarkName);
-            string arrivalText = lm?.ArrivalText ?? $"YOU HAVE REACHED {landmarkName.ToUpper()}.";
+            string arrivalText = lm?.ArrivalText ?? string.Format(Tr(TK.TravelReachedPlace), landmarkName.ToUpper());
             string? bgImg = lm?.BgImage;
             ShowMessage(arrivalText, bgImg);
 
@@ -1023,8 +1023,8 @@ public partial class MainScene : Control
         RemoveHuntScreen();
 
         string msg = meat > 0
-            ? $"YOU RETURNED WITH {meat} LBS OF MEAT. USED {ammo} BULLETS."
-            : $"EMPTY HANDED. USED {ammo} BULLETS.";
+            ? string.Format(Tr(TK.HuntResultMeat), meat, ammo)
+            : string.Format(Tr(TK.HuntResultEmpty), ammo);
 
         string? fail = GameManager.Instance.CheckFailStates();
         if (fail != null) { HandleGameEnd(fail); return; }
@@ -1068,8 +1068,8 @@ public partial class MainScene : Control
         RemoveFishScreen();
 
         string msg = added > 0
-            ? $"YOU CAUGHT {added} LBS OF FISH."
-            : "THE FISH WEREN'T BITING TODAY.";
+            ? string.Format(Tr(TK.FishResultCatch), added)
+            : Tr(TK.FishResultMiss);
 
         string? fail = GameManager.Instance.CheckFailStates();
         if (fail != null) { HandleGameEnd(fail); return; }
@@ -1286,8 +1286,8 @@ public partial class MainScene : Control
         UpdateHUD();
 
         string msg = choice == "barlow"
-            ? $"BARLOW ROAD CHOSEN. $5 TOLL PAID. THE ROAD IS ROUGH BUT DRY."
-            : "COLUMBIA RIVER ROUTE CHOSEN. PREPARE FOR THE CROSSING AHEAD.";
+            ? Tr(TK.RouteBarlowChosen)
+            : Tr(TK.RouteColumbiaChosen);
         ShowMessage(msg);
         // After message dismiss, OnMessageDismissed -> ShowChoiceMenu (FlowState.AwaitChoice)
     }

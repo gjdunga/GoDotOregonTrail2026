@@ -383,4 +383,20 @@ public static class TK
     public const string WinRankCapable     = "WIN_RANK_CAPABLE";
     public const string WinRankDetermined  = "WIN_RANK_DETERMINED";
     public const string WinRankLucky       = "WIN_RANK_LUCKY";
+    public const string WinArrivalDate     = "WIN_ARRIVAL_DATE";
+    public const string WinMemberHealth    = "WIN_MEMBER_HEALTH";
+
+    // ========================================================================
+    // TRAVEL RESULT MESSAGES (MainScene, previously hardcoded)
+    // ========================================================================
+    public const string TravelWagonLoaded   = "TRAVEL_WAGON_LOADED";
+    public const string TravelReachedPlace  = "TRAVEL_REACHED_PLACE";
+    public const string RiverCrossDone      = "RIVER_CROSS_DONE";
+    public const string HuntResultMeat      = "HUNT_RESULT_MEAT";
+    public const string HuntResultEmpty     = "HUNT_RESULT_EMPTY";
+    public const string FishResultCatch     = "FISH_RESULT_CATCH";
+    public const string FishResultMiss      = "FISH_RESULT_MISS";
+    public const string RouteBarlowChosen   = "ROUTE_BARLOW_CHOSEN";
+    public const string RouteColumbiaChosen = "ROUTE_COLUMBIA_CHOSEN";
+    public const string GameOverCauseFail   = "GAME_OVER_CAUSE_FAIL";
 }
