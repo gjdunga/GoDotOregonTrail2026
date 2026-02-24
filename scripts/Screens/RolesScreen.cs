@@ -74,13 +74,11 @@ public partial class RolesScreen : Control
         vbox.AddThemeConstantOverride("separation", 12);
         pad.AddChild(vbox);
 
-        var title = UIKit.MakeDisplayLabel("ASSIGN ROLES", 26);
+        var title = UIKit.MakeDisplayLabel(Tr(TK.RolesTitle), 26);
         title.HorizontalAlignment = HorizontalAlignment.Center;
         vbox.AddChild(title);
 
-        var hint = UIKit.MakeBodyLabel(
-            "Each role gives one party member a special bonus. A person can hold only one role.",
-            14, UIKit.ColGray);
+        var hint = UIKit.MakeBodyLabel(Tr(TK.RolesHint), 14, UIKit.ColGray);
         hint.HorizontalAlignment = HorizontalAlignment.Center;
         hint.AutowrapMode = TextServer.AutowrapMode.WordSmart;
         vbox.AddChild(hint);
@@ -103,7 +101,7 @@ public partial class RolesScreen : Control
         // Confirm button
         var confirmRow = new HBoxContainer();
         confirmRow.Alignment = BoxContainer.AlignmentMode.Center;
-        var confirmBtn = UIKit.MakePrimaryButton("CONFIRM ROLES", 20);
+        var confirmBtn = UIKit.MakePrimaryButton(Tr(TK.RolesConfirm), 20);
         confirmBtn.CustomMinimumSize = new Vector2(240, 52);
         confirmBtn.Pressed += OnConfirm;
         confirmRow.AddChild(confirmBtn);
@@ -151,6 +149,24 @@ public partial class RolesScreen : Control
 
     private Control BuildRoleRow(string roleKey, string roleName)
     {
+        // Translate name and description from TK keys
+        string translatedName = roleKey switch
+        {
+            "driver" => Tr(TK.RolesDriver),
+            "hunter" => Tr(TK.RolesHunter),
+            "medic"  => Tr(TK.RolesMedic),
+            "scout"  => Tr(TK.RolesScout),
+            _        => roleName,
+        };
+        string translatedDesc = roleKey switch
+        {
+            "driver" => Tr(TK.RolesDriverDesc),
+            "hunter" => Tr(TK.RolesHunterDesc),
+            "medic"  => Tr(TK.RolesMedicDesc),
+            "scout"  => Tr(TK.RolesScoutDesc),
+            _        => RoleDescriptions.GetValueOrDefault(roleKey, ""),
+        };
+
         var row = new HBoxContainer();
         row.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         row.AddThemeConstantOverride("separation", 10);
@@ -160,11 +176,11 @@ public partial class RolesScreen : Control
         left.CustomMinimumSize = new Vector2(280, 0);
         left.SizeFlagsHorizontal = SizeFlags.ExpandFill;
 
-        var nameLabel = UIKit.MakeDisplayLabel(roleName, 18, UIKit.ColAmber);
+        var nameLabel = UIKit.MakeDisplayLabel(translatedName, 18, UIKit.ColAmber);
         nameLabel.HorizontalAlignment = HorizontalAlignment.Left;
         left.AddChild(nameLabel);
 
-        var descLabel = UIKit.MakeBodyLabel(RoleDescriptions[roleKey], 12, UIKit.ColGray);
+        var descLabel = UIKit.MakeBodyLabel(translatedDesc, 12, UIKit.ColGray);
         descLabel.AutowrapMode = TextServer.AutowrapMode.WordSmart;
         left.AddChild(descLabel);
 

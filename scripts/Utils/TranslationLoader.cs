@@ -124,6 +124,8 @@ public static class TranslationLoader
         s = s.Trim();
         if (s.Length >= 2 && s[0] == '"' && s[^1] == '"')
             s = s[1..^1].Replace("\"\"", "\"");
-        return s;
+        // Allow \n in CSV values for multi-line strings (pace/rations descriptions etc.).
+        // Actual newlines in CSV would break line-by-line parsing, so we use the escape.
+        return s.Replace("\\n", "\n");
     }
 }

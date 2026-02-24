@@ -106,7 +106,7 @@ public partial class HuntScreen : Control
         pad.AddChild(vbox);
 
         // Title
-        var title = UIKit.MakeDisplayLabel("GO HUNTING", 26);
+        var title = UIKit.MakeDisplayLabel(Tr(TK.HuntTitle), 26);
         title.HorizontalAlignment = HorizontalAlignment.Center;
         vbox.AddChild(title);
 
@@ -117,9 +117,9 @@ public partial class HuntScreen : Control
         stats.Alignment = BoxContainer.AlignmentMode.Center;
         stats.AddThemeConstantOverride("separation", 32);
 
-        _ammoLabel = UIKit.MakeDisplayLabel($"AMMO: {_ammoAvailable}", 17, UIKit.ColAmber);
-        _meatLabel = UIKit.MakeDisplayLabel("MEAT: 0 LBS", 17, UIKit.ColGreen);
-        _capLabel  = UIKit.MakeBodyLabel($"CAP: {_cap} LBS", 14, UIKit.ColGray);
+        _ammoLabel = UIKit.MakeDisplayLabel(string.Format(Tr(TK.HuntAmmo), _ammoAvailable), 17, UIKit.ColAmber);
+        _meatLabel = UIKit.MakeDisplayLabel(string.Format(Tr(TK.HuntMeat), 0), 17, UIKit.ColGreen);
+        _capLabel  = UIKit.MakeBodyLabel(string.Format(Tr(TK.HuntCap), _cap), 14, UIKit.ColGray);
         _capLabel.VerticalAlignment = VerticalAlignment.Center;
 
         stats.AddChild(_ammoLabel);
@@ -152,19 +152,19 @@ public partial class HuntScreen : Control
         logScroll.AddChild(_logBox);
         vbox.AddChild(logScroll);
 
-        AppendLog("YOU ENTER THE WILDERNESS. YOUR RIFLE IS READY.", UIKit.ColParchment);
+        AppendLog(Tr(TK.HuntIntro), UIKit.ColParchment);
 
         // Buttons
         var btnRow = new HBoxContainer();
         btnRow.Alignment = BoxContainer.AlignmentMode.Center;
         btnRow.AddThemeConstantOverride("separation", 16);
 
-        _fireBtn = UIKit.MakePrimaryButton("FIRE!", 18);
+        _fireBtn = UIKit.MakePrimaryButton(Tr(TK.HuntFire), 18);
         _fireBtn.CustomMinimumSize = new Vector2(140, 48);
         _fireBtn.Pressed += OnFire;
         btnRow.AddChild(_fireBtn);
 
-        _returnBtn = UIKit.MakeSecondaryButton("RETURN TO CAMP", 16);
+        _returnBtn = UIKit.MakeSecondaryButton(Tr(TK.CommonReturnCamp), 16);
         _returnBtn.CustomMinimumSize = new Vector2(200, 48);
         _returnBtn.Pressed += OnReturn;
         btnRow.AddChild(_returnBtn);
@@ -195,11 +195,11 @@ public partial class HuntScreen : Control
             int raw = GameManager.RandInt(animal.meatMin, animal.meatMax);
             int gained = Math.Min(raw, _cap - _meatTotal);
             _meatTotal += gained;
-            AppendLog($"HIT! {animal.name} - +{gained} LBS MEAT.", UIKit.ColGreen);
+            AppendLog(string.Format(Tr(TK.HuntHit), animal.name, gained), UIKit.ColGreen);
         }
         else
         {
-            AppendLog($"MISSED THE {animal.name}.", UIKit.ColGray);
+            AppendLog(string.Format(Tr(TK.HuntMiss), animal.name), UIKit.ColGray);
         }
 
         // Predator threat
@@ -213,7 +213,7 @@ public partial class HuntScreen : Control
             if (leader != null)
             {
                 leader.Health = Math.Max(0, leader.Health - dmg);
-                AppendLog($"PREDATOR ATTACK! {leader.Name.ToUpper()} TAKES {dmg} DAMAGE.", UIKit.ColRed);
+                AppendLog(string.Format(Tr(TK.HuntPredator), leader.Name.ToUpper(), dmg), UIKit.ColRed);
                 HealthSystem.UpdateUnconsciousFlags(_state);
             }
         }
@@ -279,11 +279,11 @@ public partial class HuntScreen : Control
     private void UpdateStats()
     {
         int remaining = _ammoAvailable - _ammoUsed;
-        _ammoLabel.Text = $"AMMO: {remaining}";
+        _ammoLabel.Text = string.Format(Tr(TK.HuntAmmo), remaining);
         _ammoLabel.AddThemeColorOverride("font_color",
             remaining <= 3 ? UIKit.ColRed : UIKit.ColAmber);
 
-        _meatLabel.Text = $"MEAT: {_meatTotal} LBS";
+        _meatLabel.Text = string.Format(Tr(TK.HuntMeat), _meatTotal);
     }
 
     private void RefreshButtons()
@@ -292,9 +292,9 @@ public partial class HuntScreen : Control
         _fireBtn.Disabled = remaining <= 0 || _meatTotal >= _cap;
 
         if (remaining <= 0)
-            AppendLog("OUT OF AMMO.", UIKit.ColRed);
+            AppendLog(Tr(TK.HuntNoAmmo), UIKit.ColRed);
         else if (_meatTotal >= _cap)
-            AppendLog("WAGON IS FULL. RETURN TO CAMP.", UIKit.ColAmberDim);
+            AppendLog(Tr(TK.HuntWagonFull), UIKit.ColAmberDim);
     }
 
     private static int GetYieldCap(string terrain) => terrain switch

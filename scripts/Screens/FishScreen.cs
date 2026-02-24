@@ -70,7 +70,7 @@ public partial class FishScreen : Control
         vbox.AddThemeConstantOverride("separation", 10);
         pad.AddChild(vbox);
 
-        var title = UIKit.MakeDisplayLabel("GO FISHING", 26);
+        var title = UIKit.MakeDisplayLabel(Tr(TK.FishTitle), 26);
         title.HorizontalAlignment = HorizontalAlignment.Center;
         vbox.AddChild(title);
 
@@ -81,7 +81,7 @@ public partial class FishScreen : Control
         var (month, _) = DateCalc.DayToDate(_state.Day);
         bool winter = month is "NOV" or "DEC" or "JAN" or "FEB";
 
-        string ctx = nearRiver ? "GOOD FISHING SPOT NEARBY." : "NO RIVER CLOSE. SLIM PICKINGS.";
+        string ctx = nearRiver ? Tr(TK.FishNearRiver) : Tr(TK.FishNoRiver);
         if (winter) ctx += " WATER IS ICY.";
         else if (_state.Weather is "rain" or "fog") ctx += " OVERCAST BUT FISH ARE BITING.";
 
@@ -96,8 +96,8 @@ public partial class FishScreen : Control
         stats.Alignment = BoxContainer.AlignmentMode.Center;
         stats.AddThemeConstantOverride("separation", 32);
 
-        _castsLabel = UIKit.MakeDisplayLabel($"CASTS: {MaxCasts}", 17, UIKit.ColAmber);
-        _fishLabel  = UIKit.MakeDisplayLabel("CAUGHT: 0 LBS", 17, UIKit.ColGreen);
+        _castsLabel = UIKit.MakeDisplayLabel(string.Format(Tr(TK.FishCasts), MaxCasts), 17, UIKit.ColAmber);
+        _fishLabel  = UIKit.MakeDisplayLabel(string.Format(Tr(TK.FishCaught), 0), 17, UIKit.ColGreen);
 
         stats.AddChild(_castsLabel);
         stats.AddChild(_fishLabel);
@@ -117,19 +117,19 @@ public partial class FishScreen : Control
         logScroll.AddChild(_logBox);
         vbox.AddChild(logScroll);
 
-        AppendLog("YOU FIND A SPOT AND BAIT YOUR LINE.", UIKit.ColParchment);
+        AppendLog(Tr(TK.FishIntro), UIKit.ColParchment);
 
         // Buttons
         var btnRow = new HBoxContainer();
         btnRow.Alignment = BoxContainer.AlignmentMode.Center;
         btnRow.AddThemeConstantOverride("separation", 16);
 
-        _castBtn = UIKit.MakePrimaryButton("CAST LINE", 18);
+        _castBtn = UIKit.MakePrimaryButton(Tr(TK.FishCast), 18);
         _castBtn.CustomMinimumSize = new Vector2(140, 48);
         _castBtn.Pressed += OnCast;
         btnRow.AddChild(_castBtn);
 
-        var returnBtn = UIKit.MakeSecondaryButton("RETURN TO CAMP", 16);
+        var returnBtn = UIKit.MakeSecondaryButton(Tr(TK.CommonReturnCamp), 16);
         returnBtn.CustomMinimumSize = new Vector2(200, 48);
         returnBtn.Pressed += OnReturn;
         btnRow.AddChild(returnBtn);
@@ -162,22 +162,22 @@ public partial class FishScreen : Control
             int raw = GameManager.RandInt(GameConstants.FishYieldMin, GameConstants.FishYieldMax);
             if (nearRiver) raw = (int)Math.Round(raw * GameConstants.FishRiverProximityBonus);
             _fishTotal += raw;
-            AppendLog($"CAUGHT A FISH! +{raw} LBS.", UIKit.ColGreen);
+            AppendLog(string.Format(Tr(TK.FishHit), raw), UIKit.ColGreen);
         }
         else
         {
-            AppendLog("THE LINE CAME UP EMPTY.", UIKit.ColGray);
+            AppendLog(Tr(TK.FishMiss), UIKit.ColGray);
         }
 
         int remaining = MaxCasts - _castsUsed;
-        _castsLabel.Text = $"CASTS: {remaining}";
+        _castsLabel.Text = string.Format(Tr(TK.FishCasts), remaining);
         _castsLabel.AddThemeColorOverride("font_color",
             remaining <= 2 ? UIKit.ColRed : UIKit.ColAmber);
-        _fishLabel.Text = $"CAUGHT: {_fishTotal} LBS";
+        _fishLabel.Text = string.Format(Tr(TK.FishCaught), _fishTotal);
 
         _castBtn.Disabled = _castsUsed >= MaxCasts;
         if (_castsUsed >= MaxCasts)
-            AppendLog("NO MORE CASTS LEFT. RETURN TO CAMP.", UIKit.ColAmberDim);
+            AppendLog(Tr(TK.FishNoCasts), UIKit.ColAmberDim);
 
         CallDeferred(MethodName.ScrollLogToBottom);
     }

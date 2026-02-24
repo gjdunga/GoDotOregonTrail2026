@@ -74,19 +74,19 @@ public partial class VictoryScreen : Control
         scroll.AddChild(vbox);
 
         // ---- HEADER ----
-        AddCentered(vbox, UIKit.MakeDisplayLabel("WILLAMETTE VALLEY", 32, UIKit.ColAmber));
+        AddCentered(vbox, UIKit.MakeDisplayLabel(Tr(TK.WinLocation), 32, UIKit.ColAmber));
 
         string dateStr = DateCalc.DateStr(_state.Day);
         AddCentered(vbox, UIKit.MakeBodyLabel($"YOU ARRIVED ON {dateStr}, 1850.", 16, UIKit.ColParchment));
         vbox.AddChild(UIKit.MakeDivider());
 
         // ---- SURVIVORS ----
-        AddCentered(vbox, UIKit.MakeDisplayLabel("SURVIVORS", 22));
+        AddCentered(vbox, UIKit.MakeDisplayLabel(Tr(TK.WinSurvivors), 22));
 
         var living = _state.Living();
         if (living.Count == 0)
         {
-            AddCentered(vbox, UIKit.MakeBodyLabel("NONE. A HOLLOW VICTORY.", 15, UIKit.ColRed));
+            AddCentered(vbox, UIKit.MakeBodyLabel(Tr(TK.WinNoSurvivors), 15, UIKit.ColRed));
         }
         else
         {
@@ -127,31 +127,34 @@ public partial class VictoryScreen : Control
         int dead = _state.Party.Count(p => !p.Alive);
         if (dead > 0)
         {
+            // WIN_LOST: "{0} MEMBER{1} LOST ON THE TRAIL."
             AddCentered(vbox,
-                UIKit.MakeBodyLabel($"{dead} MEMBER{(dead > 1 ? "S" : "")} LOST ON THE TRAIL.", 13, UIKit.ColGray));
+                UIKit.MakeBodyLabel(
+                    string.Format(Tr(TK.WinLost), dead, dead > 1 ? "S" : ""),
+                    13, UIKit.ColGray));
         }
 
         vbox.AddChild(UIKit.MakeDivider());
 
         // ---- JOURNEY STATS ----
-        AddCentered(vbox, UIKit.MakeDisplayLabel("JOURNEY STATS", 20));
+        AddCentered(vbox, UIKit.MakeDisplayLabel(Tr(TK.WinStats), 20));
 
         var stats = new VBoxContainer();
         stats.AddThemeConstantOverride("separation", 6);
         stats.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
 
-        AddStatRow(stats, "MILES TRAVELED",  $"{_state.Miles}");
-        AddStatRow(stats, "DAYS ON TRAIL",   $"{_state.Day}");
-        AddStatRow(stats, "DATE ARRIVED",    dateStr);
-        AddStatRow(stats, "CASH REMAINING",  $"${_state.Cash:F0}");
-        AddStatRow(stats, "FOOD REMAINING",  $"{_state.Supplies.GetValueOrDefault("food", 0)} LBS");
+        AddStatRow(stats, Tr(TK.WinMiles),       $"{_state.Miles}");
+        AddStatRow(stats, Tr(TK.WinDays),         $"{_state.Day}");
+        AddStatRow(stats, Tr(TK.WinDateArrived),  dateStr);
+        AddStatRow(stats, Tr(TK.WinCash),         $"${_state.Cash:F0}");
+        AddStatRow(stats, Tr(TK.WinFood),         $"{_state.Supplies.GetValueOrDefault("food", 0)} LBS");
 
         vbox.AddChild(stats);
         vbox.AddChild(UIKit.MakeDivider());
 
         // ---- SCORE ----
         int score = CalculateScore();
-        AddCentered(vbox, UIKit.MakeDisplayLabel("SCORE", 20));
+        AddCentered(vbox, UIKit.MakeDisplayLabel(Tr(TK.WinScore), 20));
         AddCentered(vbox, UIKit.MakeDisplayLabel($"{score}", 36, UIKit.ColAmber));
         AddCentered(vbox, UIKit.MakeBodyLabel(ScoreRank(score), 14, UIKit.ColGray));
 
@@ -162,12 +165,12 @@ public partial class VictoryScreen : Control
         btnRow.Alignment = BoxContainer.AlignmentMode.Center;
         btnRow.AddThemeConstantOverride("separation", 20);
 
-        var playAgain = UIKit.MakePrimaryButton("PLAY AGAIN", 18);
+        var playAgain = UIKit.MakePrimaryButton(Tr(TK.CommonPlayAgain), 18);
         playAgain.CustomMinimumSize = new Vector2(200, 52);
         playAgain.Pressed += () => EmitSignal(SignalName.PlayAgainRequested);
         btnRow.AddChild(playAgain);
 
-        var mainMenu = UIKit.MakeSecondaryButton("MAIN MENU", 18);
+        var mainMenu = UIKit.MakeSecondaryButton(Tr(TK.CommonMainMenu), 18);
         mainMenu.CustomMinimumSize = new Vector2(200, 52);
         mainMenu.Pressed += () => EmitSignal(SignalName.MainMenuRequested);
         btnRow.AddChild(mainMenu);
@@ -182,20 +185,21 @@ public partial class VictoryScreen : Control
 
     private int CalculateScore()
     {
+        int scoreMult = GameData.GetOccupation(_state.Occupation)?.ScoreMult ?? 1;
         int base_  = 1000;
         int surv   = _state.Living().Count * 200;
         int days   = Math.Max(0, 1000 - _state.Day * 4);
         int cash   = (int)(_state.Cash / 5f);
-        return base_ + surv + days + cash;
+        return (base_ + surv + days + cash) * scoreMult;
     }
 
-    private static string ScoreRank(int score) => score switch
+    private string ScoreRank(int score) => score switch
     {
-        >= 2500 => "LEGENDARY PIONEER",
-        >= 2000 => "SEASONED TRAILBLAZER",
-        >= 1500 => "CAPABLE SETTLER",
-        >= 1000 => "DETERMINED TRAVELER",
-        _       => "LUCKY SURVIVOR",
+        >= 2500 => Tr(TK.WinRankLegendary),
+        >= 2000 => Tr(TK.WinRankSeasoned),
+        >= 1500 => Tr(TK.WinRankCapable),
+        >= 1000 => Tr(TK.WinRankDetermined),
+        _       => Tr(TK.WinRankLucky),
     };
 
     // =========================================================================

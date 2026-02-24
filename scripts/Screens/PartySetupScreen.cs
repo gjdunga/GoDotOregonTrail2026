@@ -48,15 +48,14 @@ public partial class PartySetupScreen : Control
     private Label _occDetailLabel = null!;
     private Label _partyPreviewLabel = null!;
 
-    // ---- Occupation descriptions (visible consequences) ----
-    private static readonly (string key, string title, string cash, string skill, string score, string desc)[] OccInfo =
+    // ---- Occupation info (built at call time so Tr() is available) ----
+    private static readonly string[] OccKeys = { "banker", "carpenter", "farmer" };
+
+    private (string key, string title, string cash, string skill, string score, string desc)[] GetOccInfo() => new[]
     {
-        ("banker",    "BANKER FROM BOSTON",     "$1,600", "POOR (12%)",  "x1",
-         "You start with the most money but\nyour hands have never held a wrench.\nField repairs will be difficult."),
-        ("carpenter", "CARPENTER FROM OHIO",   "$800",   "EXPERT (78%)", "x2",
-         "Moderate funds, but you know wood\nand iron. Repairs come naturally.\nScore multiplier rewards the skill."),
-        ("farmer",    "FARMER FROM ILLINOIS",  "$400",   "FAIR (48%)",  "x3",
-         "The least money, but you know the\nland and hard work. The highest\nscore multiplier for those who survive."),
+        ("banker",    Tr(TK.SetupBankerTitle),    "$1,600", "POOR (12%)",  "x1", Tr(TK.SetupBankerDesc)),
+        ("carpenter", Tr(TK.SetupCarpenterTitle), "$800",   "EXPERT (78%)", "x2", Tr(TK.SetupCarpenterDesc)),
+        ("farmer",    Tr(TK.SetupFarmerTitle),    "$400",   "FAIR (48%)",  "x3", Tr(TK.SetupFarmerDesc)),
     };
 
     public override void _Ready()
@@ -99,6 +98,7 @@ public partial class PartySetupScreen : Control
 
     private void BuildStep0()
     {
+        var occInfo = GetOccInfo();
         _step0Panel = new Control();
         _step0Panel.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         AddChild(_step0Panel);
@@ -124,12 +124,12 @@ public partial class PartySetupScreen : Control
         vbox.AddChild(titlePanel);
 
         titleVbox.AddChild(MakeLabel(
-            "THE OREGON TRAIL", 28, ColAmber, HorizontalAlignment.Center));
+            Tr(TK.SetupTrailTitle), 28, ColAmber, HorizontalAlignment.Center));
         titleVbox.AddChild(MakeLabel(
-            "MANY KINDS OF PEOPLE MADE THE TRIP TO OREGON.", 14, ColWhite, HorizontalAlignment.Center));
+            Tr(TK.SetupTrailIntro), 14, ColWhite, HorizontalAlignment.Center));
         titleVbox.AddChild(MakeSpacer(6));
         titleVbox.AddChild(MakeLabel(
-            "YOU MAY:", 16, ColAmber, HorizontalAlignment.Center));
+            Tr(TK.SetupChooseOcc), 16, ColAmber, HorizontalAlignment.Center));
         titleVbox.AddChild(MakeSpacer(4));
 
         // Occupation buttons
@@ -138,7 +138,7 @@ public partial class PartySetupScreen : Control
         for (int i = 0; i < 3; i++)
         {
             int idx = i; // capture for lambda
-            var info = OccInfo[i];
+            var info = occInfo[i];
 
             var btn = new Button
             {
@@ -159,7 +159,7 @@ public partial class PartySetupScreen : Control
         // Detail panel (shows info about hovered/selected occupation)
         var detailPanel = MakePanel();
         _occDetailLabel = MakeLabel(
-            "CHOOSE YOUR OCCUPATION TO SEE DETAILS.", 13, ColGray, HorizontalAlignment.Left);
+            Tr(TK.SetupChooseHint), 13, ColGray, HorizontalAlignment.Left);
         _occDetailLabel.AutowrapMode = TextServer.AutowrapMode.WordSmart;
         _occDetailLabel.CustomMinimumSize = new Vector2(620, 80);
         detailPanel.AddChild(_occDetailLabel);
@@ -170,10 +170,10 @@ public partial class PartySetupScreen : Control
         titleVbox.AddChild(MakeLabel(
             "PRESS 1, 2, OR 3 TO CHOOSE", 12, ColGray, HorizontalAlignment.Center));
     }
-
     private void OnOccupationHover(int idx)
     {
-        var info = OccInfo[idx];
+        var occInfo = GetOccInfo();
+        var info = occInfo[idx];
         _occDetailLabel.Text =
             $"{info.title}\n" +
             $"STARTING CASH: {info.cash}    REPAIR SKILL: {info.skill}    SCORE: {info.score}\n\n" +
@@ -183,7 +183,8 @@ public partial class PartySetupScreen : Control
 
     private void OnOccupationClicked(int idx)
     {
-        _selectedOccupation = OccInfo[idx].key;
+        var occInfo = GetOccInfo();
+        _selectedOccupation = occInfo[idx].key;
 
         // Highlight selected, dim others
         for (int i = 0; i < 3; i++)
@@ -224,19 +225,19 @@ public partial class PartySetupScreen : Control
         vbox.AddChild(titlePanel);
 
         titleInner.AddChild(MakeLabel(
-            "WHAT ARE THE NAMES OF THE", 16, ColWhite, HorizontalAlignment.Center));
+            Tr(TK.SetupNameQuestion1), 16, ColWhite, HorizontalAlignment.Center));
         titleInner.AddChild(MakeLabel(
-            "FIVE MEMBERS IN YOUR PARTY?", 16, ColWhite, HorizontalAlignment.Center));
+            Tr(TK.SetupNameQuestion2), 16, ColWhite, HorizontalAlignment.Center));
 
         titleInner.AddChild(MakeSpacer(12));
 
         // Name input fields
         string[] labels = {
-            "1. WAGON LEADER:",
-            "2. PARTY MEMBER:",
-            "3. PARTY MEMBER:",
-            "4. PARTY MEMBER:",
-            "5. PARTY MEMBER:",
+            $"1. {Tr(TK.SetupWagonLeader)}:",
+            $"2. {Tr(TK.SetupPartyMember)}:",
+            $"3. {Tr(TK.SetupPartyMember)}:",
+            $"4. {Tr(TK.SetupPartyMember)}:",
+            $"5. {Tr(TK.SetupPartyMember)}:",
         };
 
         for (int i = 0; i < 5; i++)
@@ -254,7 +255,7 @@ public partial class PartySetupScreen : Control
                 Text = _partyNames[i],
                 MaxLength = GameConstants.PartyNameMaxLength,
                 CustomMinimumSize = new Vector2(380, 36),
-                PlaceholderText = "ENTER NAME...",
+                PlaceholderText = Tr(TK.SetupEnterName),
                 SelectAllOnFocus = true,
             };
             StyleLineEdit(edit);
@@ -279,11 +280,11 @@ public partial class PartySetupScreen : Control
         btnRow.AddThemeConstantOverride("separation", 20);
         btnRow.Alignment = BoxContainer.AlignmentMode.Center;
 
-        var backBtn = MakeStyledButton("< BACK");
+        var backBtn = MakeStyledButton($"< {Tr(TK.SetupBack)}");
         backBtn.Pressed += () => ShowStep(0);
         btnRow.AddChild(backBtn);
 
-        var beginBtn = MakeStyledButton("HIT THE TRAIL >");
+        var beginBtn = MakeStyledButton($"{Tr(TK.SetupHitTrail)} >");
         beginBtn.CustomMinimumSize = new Vector2(220, 44);
         beginBtn.Pressed += OnBeginGame;
         btnRow.AddChild(beginBtn);
@@ -292,7 +293,7 @@ public partial class PartySetupScreen : Control
 
         titleInner.AddChild(MakeSpacer(4));
         titleInner.AddChild(MakeLabel(
-            "TAB TO MOVE BETWEEN FIELDS", 11, ColGray, HorizontalAlignment.Center));
+            Tr(TK.SetupTabHint), 11, ColGray, HorizontalAlignment.Center));
     }
 
     private void OnNameChanged(int idx, string text)
@@ -305,7 +306,7 @@ public partial class PartySetupScreen : Control
     {
         string names = string.Join(", ", _partyNames.Select(
             n => string.IsNullOrWhiteSpace(n) ? "???" : n.ToUpper()));
-        _partyPreviewLabel.Text = $"YOUR PARTY: {names}";
+        _partyPreviewLabel.Text = $"{Tr(TK.SetupYourParty)}: {names}";
     }
 
     private void OnBeginGame()

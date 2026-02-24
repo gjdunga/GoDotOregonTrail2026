@@ -41,16 +41,17 @@ public partial class FortStoreScreen : Control
     private Label _weightLabel = null!;
     private VBoxContainer _contentRoot = null!;
 
-    // Item definitions: (itemKey, displayName, unit, stepQty, category)
-    private static readonly (string key, string name, string unit, int step, string cat)[] Items =
+    // Item definitions: (itemKey, nameKey, unitKey, stepQty, category)
+    // nameKey and unitKey are TK constants resolved via TranslationServer.Translate() at UI build time.
+    private static readonly (string key, string nameKey, string unitKey, int step, string cat)[] Items =
     {
-        ("food_lb",      "FOOD",          "per lb",      50, "food"),
-        ("bullets_box",  "AMMUNITION",    "per box/20",   1, "ammo"),
-        ("clothes_set",  "CLOTHING",      "per set",      1, "clothes"),
-        ("yoke_oxen",    "OXEN",          "per yoke",     1, "livestock"),
-        ("spare_wheel",  "SPARE WHEEL",   "each",         1, "parts"),
-        ("spare_axle",   "SPARE AXLE",    "each",         1, "parts"),
-        ("spare_tongue", "SPARE TONGUE",  "each",         1, "parts"),
+        ("food_lb",      TK.StoreItemFood,    TK.StoreUnitPerLb,   50, "food"),
+        ("bullets_box",  TK.StoreItemAmmo,    TK.StoreUnitPerBox,   1, "ammo"),
+        ("clothes_set",  TK.StoreItemClothes, TK.StoreUnitPerSet,   1, "clothes"),
+        ("yoke_oxen",    TK.StoreItemOxen,    TK.StoreUnitPerYoke,  1, "livestock"),
+        ("spare_wheel",  TK.StoreItemWheel,   TK.StoreUnitEach,     1, "parts"),
+        ("spare_axle",   TK.StoreItemAxle,    TK.StoreUnitEach,     1, "parts"),
+        ("spare_tongue", TK.StoreItemTongue,  TK.StoreUnitEach,     1, "parts"),
     };
 
     public void Initialize(GameState state)
@@ -115,12 +116,12 @@ public partial class FortStoreScreen : Control
         statRow.Alignment = BoxContainer.AlignmentMode.Center;
         statRow.AddThemeConstantOverride("separation", 40);
 
-        _cashLabel = UIKit.MakeDisplayLabel($"CASH: ${_state.Cash:F2}", 20, UIKit.ColAmber);
+        _cashLabel = UIKit.MakeDisplayLabel(string.Format(Tr(TK.StoreCash), _state.Cash), 20, UIKit.ColAmber);
         statRow.AddChild(_cashLabel);
 
         int cargo = CargoSystem.CargoWeight(_state);
         int cap   = CargoSystem.CargoCapacity(_state);
-        _weightLabel = UIKit.MakeBodyLabel($"CARGO: {cargo}/{cap} LBS", 14, UIKit.ColGray);
+        _weightLabel = UIKit.MakeBodyLabel(string.Format(Tr(TK.StoreCargo), cargo, cap), 14, UIKit.ColGray);
         _weightLabel.VerticalAlignment = VerticalAlignment.Center;
         statRow.AddChild(_weightLabel);
 
@@ -144,17 +145,17 @@ public partial class FortStoreScreen : Control
             (i.cat == "clothes" && stock.Clothes)).ToList();
 
         if (supplyItems.Count > 0)
-            BuildItemSection("SUPPLIES", supplyItems);
+            BuildItemSection(Tr(TK.StoreSecSupplies),  supplyItems);
 
         // Livestock
         var oxenItems = Items.Where(i => i.cat == "livestock" && stock.Oxen).ToList();
         if (oxenItems.Count > 0)
-            BuildItemSection("LIVESTOCK", oxenItems);
+            BuildItemSection(Tr(TK.StoreSecLivestock), oxenItems);
 
         // Wagon parts
         var partItems = Items.Where(i => i.cat == "parts" && stock.Parts).ToList();
         if (partItems.Count > 0)
-            BuildItemSection("WAGON PARTS", partItems);
+            BuildItemSection(Tr(TK.StoreSecParts), partItems);
 
         // Cures
         if (stock.Cures)
@@ -204,7 +205,7 @@ public partial class FortStoreScreen : Control
         var nameCol = new VBoxContainer();
         nameCol.CustomMinimumSize = new Vector2(180, 0);
         var nameLabel = UIKit.MakeBodyLabel(displayName, 15, UIKit.ColParchment);
-        var ownedLabel = UIKit.MakeBodyLabel($"OWNED: {owned}", 12, UIKit.ColGray);
+        var ownedLabel = UIKit.MakeBodyLabel(string.Format(Tr(TK.StoreOwned), owned), 12, UIKit.ColGray);
         nameCol.AddChild(nameLabel);
         nameCol.AddChild(ownedLabel);
         row.AddChild(nameCol);
@@ -251,7 +252,7 @@ public partial class FortStoreScreen : Control
         row.AddChild(btnPlus);
 
         // BUY button
-        var buyBtn = UIKit.MakeSecondaryButton($"BUY", 14);
+        var buyBtn = UIKit.MakeSecondaryButton(Tr(TK.StoreBuy), 14);
         buyBtn.CustomMinimumSize = new Vector2(72, 40);
         buyBtn.Pressed += () =>
         {
@@ -287,14 +288,14 @@ public partial class FortStoreScreen : Control
 
         bool soldout = EconomySystem.IsSoldout(_state, _storeKey, "cures");
 
-        var heading = UIKit.MakeDisplayLabel("MEDICAL SUPPLIES", 18, UIKit.ColAmberDim);
+        var heading = UIKit.MakeDisplayLabel(Tr(TK.StoreSecMedical), 18, UIKit.ColAmberDim);
         heading.HorizontalAlignment = HorizontalAlignment.Left;
         _contentRoot.AddChild(heading);
 
         if (soldout)
         {
             _contentRoot.AddChild(
-                UIKit.MakeBodyLabel("MEDICAL SUPPLIES: SOLD OUT", 14, UIKit.ColRed));
+                UIKit.MakeBodyLabel(Tr(TK.StoreMedSoldOut), 14, UIKit.ColRed));
         }
         else
         {
@@ -324,13 +325,13 @@ public partial class FortStoreScreen : Control
         var nameCol = new VBoxContainer();
         nameCol.CustomMinimumSize = new Vector2(180, 0);
         nameCol.AddChild(UIKit.MakeBodyLabel(illName, 15, UIKit.ColParchment));
-        nameCol.AddChild(UIKit.MakeBodyLabel($"AFFLICTED: {who}", 12, UIKit.ColGray));
+        nameCol.AddChild(UIKit.MakeBodyLabel(string.Format(Tr(TK.StoreAfflicted), who), 12, UIKit.ColGray));
         row.AddChild(nameCol);
 
         row.AddChild(UIKit.MakeBodyLabel($"${price}", 14, UIKit.ColGray));
         row.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
 
-        var buyBtn = UIKit.MakeSecondaryButton("CURE", 14);
+        var buyBtn = UIKit.MakeSecondaryButton(Tr(TK.StoreCure), 14);
         buyBtn.CustomMinimumSize = new Vector2(72, 40);
         buyBtn.Pressed += () =>
         {
@@ -354,7 +355,7 @@ public partial class FortStoreScreen : Control
 
     private void BuildBlacksmithSection()
     {
-        var heading = UIKit.MakeDisplayLabel("BLACKSMITH SERVICES", 18, UIKit.ColAmberDim);
+        var heading = UIKit.MakeDisplayLabel(Tr(TK.StoreSecBlacksmith), 18, UIKit.ColAmberDim);
         heading.HorizontalAlignment = HorizontalAlignment.Left;
         _contentRoot.AddChild(heading);
 
@@ -462,7 +463,7 @@ public partial class FortStoreScreen : Control
         priceLbl.VerticalAlignment = VerticalAlignment.Center;
         row.AddChild(priceLbl);
 
-        var btn = UIKit.MakeSecondaryButton("BUY", 14);
+        var btn = UIKit.MakeSecondaryButton(Tr(TK.StoreBuy), 14);
         btn.CustomMinimumSize = new Vector2(60, 40);
         btn.Disabled = disabled || !canAfford;
         btn.Pressed += () => onBuy();
@@ -482,7 +483,7 @@ public partial class FortStoreScreen : Control
         var leaveRow = new HBoxContainer();
         leaveRow.Alignment = BoxContainer.AlignmentMode.Center;
 
-        var leaveBtn = UIKit.MakePrimaryButton("LEAVE STORE", 20);
+        var leaveBtn = UIKit.MakePrimaryButton(Tr(TK.StoreLeave), 20);
         leaveBtn.CustomMinimumSize = new Vector2(260, 56);
         leaveBtn.Pressed += () => EmitSignal(SignalName.StoreExited);
         leaveRow.AddChild(leaveBtn);

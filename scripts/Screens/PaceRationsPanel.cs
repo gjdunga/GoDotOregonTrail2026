@@ -73,7 +73,7 @@ public partial class PaceRationsPanel : Control
         vbox.AddThemeConstantOverride("separation", 14);
         pad.AddChild(vbox);
 
-        var title = UIKit.MakeDisplayLabel("TRAVEL SETTINGS", 24);
+        var title = UIKit.MakeDisplayLabel(Tr(TK.PaceTitle), 24);
         title.HorizontalAlignment = HorizontalAlignment.Center;
         vbox.AddChild(title);
 
@@ -82,14 +82,14 @@ public partial class PaceRationsPanel : Control
         var foodRow = new HBoxContainer();
         foodRow.Alignment = BoxContainer.AlignmentMode.Center;
         foodRow.AddThemeConstantOverride("separation", 24);
-        AddFoodStat(foodRow, "FOOD REMAINING", $"{_state.Supplies.GetValueOrDefault("food", 0)} LBS");
-        AddFoodStat(foodRow, "PARTY SIZE",     $"{living} ALIVE");
+        AddFoodStat(foodRow, Tr(TK.PaceFoodRemaining), $"{_state.Supplies.GetValueOrDefault("food", 0)} LBS");
+        AddFoodStat(foodRow, Tr(TK.PacePartySize),     $"{living} ALIVE");
         vbox.AddChild(foodRow);
 
         vbox.AddChild(UIKit.MakeDivider());
 
         // ---- PACE section ----
-        AddCentered(vbox, UIKit.MakeDisplayLabel("PACE", 19, UIKit.ColAmber));
+        AddCentered(vbox, UIKit.MakeDisplayLabel(Tr(TK.PacePaceHeader), 19, UIKit.ColAmber));
 
         var paceDesc = UIKit.MakeBodyLabel(
             "REST recovers health but covers no ground. GRUELING moves faster but damages the wagon and oxen.",
@@ -102,9 +102,9 @@ public partial class PaceRationsPanel : Control
         paceRow.Alignment = BoxContainer.AlignmentMode.Center;
         paceRow.AddThemeConstantOverride("separation", 10);
 
-        _btnRest     = MakePaceBtn("REST",     "0 miles/day\nFull health recovery\nNo wagon wear");
-        _btnSteady   = MakePaceBtn("STEADY",   "8-17 miles/day\nNormal health\nNormal wagon wear");
-        _btnGrueling = MakePaceBtn("GRUELING", "12-22 miles/day\nReduced recovery\n2.5x wagon wear");
+        _btnRest     = MakePaceBtn(Tr(TK.PaceRest),     Tr(TK.PaceRestDesc));
+        _btnSteady   = MakePaceBtn(Tr(TK.PaceSteady),   Tr(TK.PaceSteadyDesc));
+        _btnGrueling = MakePaceBtn(Tr(TK.PaceGrueling), Tr(TK.PaceGruelingDesc));
 
         _btnRest.Pressed     += () => SetPace("rest");
         _btnSteady.Pressed   += () => SetPace("steady");
@@ -118,9 +118,9 @@ public partial class PaceRationsPanel : Control
         vbox.AddChild(UIKit.MakeDivider());
 
         // ---- RATIONS section ----
-        AddCentered(vbox, UIKit.MakeDisplayLabel("RATIONS", 19, UIKit.ColAmber));
+        AddCentered(vbox, UIKit.MakeDisplayLabel(Tr(TK.PaceRationsHeader), 19, UIKit.ColAmber));
 
-        // Daily consumption preview per rations level
+        // Daily consumption preview per rations level (untranslated; format varies by locale)
         string consPreview = $"BARE: {2 * living} LBS/DAY    MEAGER: {3 * living} LBS/DAY    FILLING: {5 * living} LBS/DAY";
         var consLabel = UIKit.MakeBodyLabel(consPreview, 12, UIKit.ColGray);
         consLabel.HorizontalAlignment = HorizontalAlignment.Center;
@@ -130,9 +130,10 @@ public partial class PaceRationsPanel : Control
         rationsRow.Alignment = BoxContainer.AlignmentMode.Center;
         rationsRow.AddThemeConstantOverride("separation", 10);
 
-        _btnBare    = MakePaceBtn("BARE BONES", $"{2 * living} lbs/day\nHalf health recovery\nUse when food low");
-        _btnMeager  = MakePaceBtn("MEAGER",     $"{3 * living} lbs/day\n-30% health recovery\nConserves food");
-        _btnFilling = MakePaceBtn("FILLING",    $"{5 * living} lbs/day\nFull health recovery\nBest for weak party");
+        // RATIONS_BARE_DESC: "{0} lbs/day\nHalf health recovery\nUse when food low"
+        _btnBare    = MakePaceBtn(Tr(TK.RationsBareLabel), string.Format(Tr(TK.RationsBareDesc),   2 * living));
+        _btnMeager  = MakePaceBtn(Tr(TK.RationsMeager),    string.Format(Tr(TK.RationsMeagerDesc),  3 * living));
+        _btnFilling = MakePaceBtn(Tr(TK.RationsFilling),   string.Format(Tr(TK.RationsFillingDesc), 5 * living));
 
         _btnBare.Pressed    += () => SetRations("bare");
         _btnMeager.Pressed  += () => SetRations("meager");
@@ -148,7 +149,7 @@ public partial class PaceRationsPanel : Control
         // CONFIRM
         var confirmRow = new HBoxContainer();
         confirmRow.Alignment = BoxContainer.AlignmentMode.Center;
-        var confirmBtn = UIKit.MakePrimaryButton("CONFIRM", 20);
+        var confirmBtn = UIKit.MakePrimaryButton(Tr(TK.CommonConfirm), 20);
         confirmBtn.CustomMinimumSize = new Vector2(220, 52);
         confirmBtn.Pressed += () => EmitSignal(SignalName.Confirmed);
         confirmRow.AddChild(confirmBtn);

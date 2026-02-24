@@ -262,7 +262,7 @@ public partial class MainScene : Control
         vbox.AddThemeConstantOverride("separation", 8);
 
         // Title row
-        var titleLabel = UIKit.MakeDisplayLabel("WHAT IS YOUR CHOICE?", 18);
+        var titleLabel = UIKit.MakeDisplayLabel(Tr(TK.TravelChoiceTitle), 18);
         titleLabel.HorizontalAlignment = HorizontalAlignment.Center;
         vbox.AddChild(titleLabel);
 
@@ -276,16 +276,16 @@ public partial class MainScene : Control
         row2.Alignment = BoxContainer.AlignmentMode.Center;
 
         // Row 1
-        row1.AddChild(MakeChoiceButton("CONTINUE", 1));
-        row1.AddChild(MakeChoiceButton("CHECK MAP", 2));
-        row1.AddChild(MakeChoiceButton("VISIT STORE", 3));
-        row1.AddChild(MakeChoiceButton("PACE/RATIONS", 4));
+        row1.AddChild(MakeChoiceButton(Tr(TK.TravelContinue),    1));
+        row1.AddChild(MakeChoiceButton(Tr(TK.TravelCheckMap),    2));
+        row1.AddChild(MakeChoiceButton(Tr(TK.TravelVisitStore),  3));
+        row1.AddChild(MakeChoiceButton(Tr(TK.TravelPaceRations), 4));
 
         // Row 2
-        row2.AddChild(MakeChoiceButton("GO HUNTING", 5));
-        row2.AddChild(MakeChoiceButton("GO FISHING", 6));
-        row2.AddChild(MakeChoiceButton("SAVE GAME", 7));
-        row2.AddChild(MakeChoiceButton("ROLES", 8));
+        row2.AddChild(MakeChoiceButton(Tr(TK.TravelGoHunting), 5));
+        row2.AddChild(MakeChoiceButton(Tr(TK.TravelGoFishing), 6));
+        row2.AddChild(MakeChoiceButton(Tr(TK.TravelSaveGame),  7));
+        row2.AddChild(MakeChoiceButton(Tr(TK.TravelRoles),     8));
 
         vbox.AddChild(row1);
         vbox.AddChild(row2);
@@ -941,14 +941,14 @@ public partial class MainScene : Control
                 if (!string.IsNullOrEmpty(gm.State.AtTownStoreKey))
                     ShowFortStoreScreen();
                 else
-                    ShowMessage("NO STORE HERE.");
+                    ShowMessage(Tr(TK.TravelNoStore));
                 break;
             case 4:
                 ShowPaceRationsPanel();
                 break;
             case 5:
                 if (gm.State.Supplies.GetValueOrDefault("bullets", 0) <= 0)
-                    ShowMessage("NO AMMO. LOAD UP BEFORE HUNTING.");
+                    ShowMessage(Tr(TK.TravelNoAmmo));
                 else
                     ShowHuntScreen();
                 break;
@@ -957,7 +957,7 @@ public partial class MainScene : Control
                 break;
             case 7:
                 gm.QuickSave();
-                ShowMessage("GAME SAVED.");
+                ShowMessage(Tr(TK.TravelGameSaved));
                 break;
             case 8:
                 ShowRolesScreen();
@@ -1390,9 +1390,9 @@ public partial class MainScene : Control
 
         _dateLabel.Text = DateCalc.DateStr(st.Day);
         _weatherLabel.Text = st.Weather.ToUpper();
-        _milesLabel.Text = $"MILES: {st.Miles}/{GameConstants.TargetMiles}";
-        _cashLabel.Text = $"${st.Cash:F2}";
-        _foodLabel.Text = $"FOOD: {st.Supplies.GetValueOrDefault("food", 0)}";
+        _milesLabel.Text = string.Format(Tr(TK.HudMiles), st.Miles, GameConstants.TargetMiles);
+        _cashLabel.Text = string.Format(Tr(TK.HudCash), st.Cash);
+        _foodLabel.Text = string.Format(Tr(TK.HudFood), st.Supplies.GetValueOrDefault("food", 0));
 
         var living = st.Living();
         if (living.Count > 0)
@@ -1400,15 +1400,15 @@ public partial class MainScene : Control
             int avgHealth = (int)living.Average(p => p.Health);
             string healthStr = avgHealth switch
             {
-                > 800 => "GOOD",
-                > 500 => "FAIR",
-                > 200 => "POOR",
-                > 0 => "VERY POOR",
-                _ => "CRITICAL",
+                > 800 => Tr(TK.WagonGood),
+                > 500 => Tr(TK.WagonFair),
+                > 200 => Tr(TK.WagonPoor),
+                > 0   => Tr(TK.WagonVeryPoor),
+                _     => Tr(TK.WagonCritical),
             };
-            _healthLabel.Text = $"HEALTH: {healthStr}";
+            _healthLabel.Text = string.Format(Tr(TK.HudHealth), healthStr);
 
-            // Color code health
+            // Color code health (match on raw avgHealth, not translated string)
             Color healthColor = avgHealth switch
             {
                 > 800 => UIKit.ColGreen,
@@ -1419,34 +1419,34 @@ public partial class MainScene : Control
             _healthLabel.AddThemeColorOverride("font_color", healthColor);
         }
 
-        // Pace
-        string paceStr = st.Pace.ToUpper() switch
+        // Pace - match on internal state value (English key), display translated label
+        string paceKey = st.Pace.ToUpper() switch
         {
-            "REST"     => "REST",
-            "GRUELING" => "GRUELING",
-            _          => "STEADY",
+            "REST"     => TK.PaceRest,
+            "GRUELING" => TK.PaceGrueling,
+            _          => TK.PaceSteady,
         };
-        _paceLabel.Text = $"PACE: {paceStr}";
-        _paceLabel.AddThemeColorOverride("font_color", paceStr switch
+        _paceLabel.Text = string.Format(Tr(TK.HudPace), Tr(paceKey));
+        _paceLabel.AddThemeColorOverride("font_color", st.Pace.ToUpper() switch
         {
             "REST"     => UIKit.ColGreen,
             "GRUELING" => UIKit.ColRed,
             _          => UIKit.ColParchment,
         });
 
-        // Rations
-        string ratStr = st.Rations.ToLower() switch
+        // Rations - match on internal state value (English key), display translated label
+        string ratKey = st.Rations.ToLower() switch
         {
-            "bare" or "bare bones" or "barebones" => "BARE",
-            "meager" or "meagre"                  => "MEAGER",
-            _                                     => "FILLING",
+            "bare" or "bare bones" or "barebones" => TK.RationsBare,
+            "meager" or "meagre"                  => TK.RationsMeager,
+            _                                     => TK.RationsFilling,
         };
-        _rationsLabel.Text = $"RATIONS: {ratStr}";
-        _rationsLabel.AddThemeColorOverride("font_color", ratStr switch
+        _rationsLabel.Text = string.Format(Tr(TK.HudRations), Tr(ratKey));
+        _rationsLabel.AddThemeColorOverride("font_color", st.Rations.ToLower() switch
         {
-            "BARE"   => UIKit.ColRed,
-            "MEAGER" => UIKit.ColAmber,
-            _        => UIKit.ColGreen,
+            "bare" or "bare bones" or "barebones" => UIKit.ColRed,
+            "meager" or "meagre"                  => UIKit.ColAmber,
+            _                                     => UIKit.ColGreen,
         });
     }
 }

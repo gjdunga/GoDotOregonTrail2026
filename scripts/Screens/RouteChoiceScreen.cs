@@ -74,14 +74,11 @@ public partial class RouteChoiceScreen : Control
         pad.AddChild(vbox);
 
         // Title
-        var title = UIKit.MakeDisplayLabel("THE COLUMBIA GORGE", 28, UIKit.ColAmber);
+        var title = UIKit.MakeDisplayLabel(Tr(TK.RouteTitle), 28, UIKit.ColAmber);
         title.HorizontalAlignment = HorizontalAlignment.Center;
         vbox.AddChild(title);
 
-        var subtitle = UIKit.MakeBodyLabel(
-            "You have reached The Dalles. The overland trail ends here.\n" +
-            "Oregon City is 270 miles ahead. You must choose your route.",
-            15, UIKit.ColParchment);
+        var subtitle = UIKit.MakeBodyLabel(Tr(TK.RouteSubtitle), 15, UIKit.ColParchment);
         subtitle.AutowrapMode = TextServer.AutowrapMode.WordSmart;
         subtitle.HorizontalAlignment = HorizontalAlignment.Center;
         vbox.AddChild(subtitle);
@@ -96,9 +93,9 @@ public partial class RouteChoiceScreen : Control
         routeRow.SizeFlagsHorizontal = SizeFlags.ExpandFill;
 
         routeRow.AddChild(BuildRouteCard(
-            "BARLOW ROAD",
-            "TOLL: $5.00",
-            "OVERLAND - SAFER",
+            Tr(TK.RouteBarlowName),
+            Tr(TK.RouteBarlowCost),
+            Tr(TK.RouteBarlowSub),
             new[]
             {
                 "Sam Barlow's toll road skirts Mt. Hood.",
@@ -107,14 +104,14 @@ public partial class RouteChoiceScreen : Control
                 "Avoids the Columbia entirely.",
                 "Best if your wagon and oxen are worn.",
             },
-            RecommendBarlow() ? "RECOMMENDED FOR YOUR SITUATION" : null,
+            RecommendBarlow() ? Tr(TK.RouteRecommended) : null,
             "barlow",
             UIKit.ColAmber));
 
         routeRow.AddChild(BuildRouteCard(
-            "COLUMBIA RIVER",
-            "NO TOLL",
-            "BY WATER - FASTER",
+            Tr(TK.RouteColumbiaName),
+            Tr(TK.RouteColumbiaSub1),
+            Tr(TK.RouteColumbiaSub2),
             new[]
             {
                 "Raft or ferry down the Columbia River.",
@@ -123,7 +120,7 @@ public partial class RouteChoiceScreen : Control
                 "Strong current, potential loss of goods.",
                 "Best if your party and supplies are strong.",
             },
-            !RecommendBarlow() ? "RECOMMENDED FOR YOUR SITUATION" : null,
+            !RecommendBarlow() ? Tr(TK.RouteRecommended) : null,
             "river",
             UIKit.ColGreen));
 
@@ -131,9 +128,7 @@ public partial class RouteChoiceScreen : Control
 
         vbox.AddChild(UIKit.MakeSpacer(4));
 
-        var note = UIKit.MakeBodyLabel(
-            "THIS CHOICE CANNOT BE UNDONE.",
-            13, UIKit.ColRed);
+        var note = UIKit.MakeBodyLabel(Tr(TK.RouteIrreversible), 13, UIKit.ColRed);
         note.HorizontalAlignment = HorizontalAlignment.Center;
         vbox.AddChild(note);
     }
@@ -259,12 +254,12 @@ public partial class RouteChoiceScreen : Control
         int oxenPct   = (int)(_state.OxenCondition / (float)GameConstants.ConditionMaximum * 100f);
         int oxenCount = _state.Supplies.GetValueOrDefault("oxen", 0);
 
-        AddStat(row, "CASH",         $"${_state.Cash:F0}");
-        AddStat(row, "WAGON COND",   $"{wagonPct}%", wagonPct < 40 ? UIKit.ColRed : UIKit.ColGreen);
-        AddStat(row, "OXEN",         $"{oxenCount} YOKES");
-        AddStat(row, "OXEN COND",    $"{oxenPct}%",  oxenPct  < 40 ? UIKit.ColRed : UIKit.ColGreen);
-        AddStat(row, "FOOD",         $"{_state.Supplies.GetValueOrDefault("food", 0)} LBS");
-        AddStat(row, "SURVIVORS",    $"{_state.Living().Count}");
+        AddStat(row, Tr(TK.RouteStatCash),    $"${_state.Cash:F0}");
+        AddStat(row, Tr(TK.RouteStatWagon),   $"{wagonPct}%", wagonPct < 40 ? UIKit.ColRed : UIKit.ColGreen);
+        AddStat(row, Tr(TK.RouteStatOxen),    string.Format(Tr(TK.RouteYokes), oxenCount));
+        AddStat(row, Tr(TK.RouteStatOxenCond),$"{oxenPct}%",  oxenPct  < 40 ? UIKit.ColRed : UIKit.ColGreen);
+        AddStat(row, Tr(TK.RouteStatFood),    string.Format(Tr(TK.RouteLbs), _state.Supplies.GetValueOrDefault("food", 0)));
+        AddStat(row, Tr(TK.RouteStatSurv),    $"{_state.Living().Count}");
 
         return row;
     }

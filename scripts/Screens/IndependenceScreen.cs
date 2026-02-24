@@ -54,27 +54,16 @@ public partial class IndependenceScreen : Control
     };
 
     // Recommended amounts for guidance text
-    private static readonly Dictionary<string, string> Recommendations = new()
+    private Dictionary<string, string> GetRecommendations() => new()
     {
-        { "oxen", "You need at least 1 yoke. 3 is ideal." },
-        { "food", "200 lbs per person for the journey. 1000 lbs total recommended." },
-        { "clothes", "At least 2 sets per person. Cold mountains ahead." },
-        { "bullets", "5+ boxes for hunting. More if you rely on game." },
-        { "wheel", "1 spare minimum. Trails are rough." },
-        { "axle", "1 spare recommended." },
-        { "tongue", "1 spare recommended." },
+        { "oxen",    Tr(TK.IndRecOxen) },
+        { "food",    Tr(TK.IndRecFood) },
+        { "clothes", Tr(TK.IndRecClothes) },
+        { "bullets", Tr(TK.IndRecBullets) },
+        { "wheel",   Tr(TK.IndRecWheel) },
+        { "axle",    Tr(TK.IndRecAxle) },
+        { "tongue",  Tr(TK.IndRecTongue) },
     };
-
-    private static readonly string[] MonthNames = { "MARCH", "APRIL", "MAY", "JUNE", "JULY" };
-    private static readonly string[] MonthDescriptions =
-    {
-        "Early start. Cold and wet, but more time on the trail.",
-        "Good balance of weather and timing. Most popular choice.",
-        "Warm start, but you must keep pace to beat the snow.",
-        "Late start. Risk of early snow in the mountains.",
-        "Very late. Snow in the Blue Mountains is almost certain.",
-    };
-
     public void Initialize(GameState state)
     {
         _state = state;
@@ -115,11 +104,11 @@ public partial class IndependenceScreen : Control
         scroll.AddChild(root);
 
         // ---- TITLE ----
-        var titleLabel = UIKit.MakeDisplayLabel("INDEPENDENCE, MISSOURI", 28);
+        var titleLabel = UIKit.MakeDisplayLabel(Tr(TK.IndTitle), 28);
         titleLabel.HorizontalAlignment = HorizontalAlignment.Center;
         root.AddChild(titleLabel);
 
-        var yearLabel = UIKit.MakeDisplayLabel("SPRING, 1850", 20);
+        var yearLabel = UIKit.MakeDisplayLabel(Tr(TK.IndYear), 20);
         yearLabel.HorizontalAlignment = HorizontalAlignment.Center;
         root.AddChild(yearLabel);
 
@@ -129,29 +118,21 @@ public partial class IndependenceScreen : Control
         string occName = GameData.GetOccupation(_state.Occupation)?.Name ?? _state.Occupation;
         string leaderName = _state.Party.Count > 0 ? _state.Party[0].Name : "You";
 
-        string introText =
-            $"{leaderName}, a {occName.ToLower()}, has gathered a party of five " +
-            "for the 2,170 mile journey west to Oregon's Willamette Valley. " +
-            "The route follows the Platte River across the Great Plains, through " +
-            "South Pass in the Rocky Mountains, and down the Columbia River gorge " +
-            "to Oregon City.\n\n" +
-            "Before departing, you must outfit your wagon at Matt's General Store. " +
-            "Choose your supplies wisely. Once you leave Independence, resupply " +
-            "opportunities are scarce and prices only go up.";
+        string introText = string.Format(Tr(TK.IndIntro), leaderName, occName.ToLower());
 
         var introLabel = UIKit.MakeBodyLabel(introText, 15, UIKit.ColDarkBrown);
         introLabel.AutowrapMode = TextServer.AutowrapMode.WordSmart;
         root.AddChild(introLabel);
 
         // ---- CASH DISPLAY ----
-        _cashLabel = UIKit.MakeDisplayLabel($"TREASURY: ${_state.Cash:F2}", 22);
+        _cashLabel = UIKit.MakeDisplayLabel(string.Format(Tr(TK.IndTreasury), _state.Cash), 22);
         _cashLabel.HorizontalAlignment = HorizontalAlignment.Center;
         root.AddChild(_cashLabel);
 
         root.AddChild(MakeSectionDivider());
 
         // ---- DEPARTURE MONTH ----
-        var monthTitle = UIKit.MakeDisplayLabel("CHOOSE DEPARTURE MONTH", 20);
+        var monthTitle = UIKit.MakeDisplayLabel(Tr(TK.IndChooseMonth), 20);
         monthTitle.HorizontalAlignment = HorizontalAlignment.Center;
         root.AddChild(monthTitle);
 
@@ -161,13 +142,11 @@ public partial class IndependenceScreen : Control
         root.AddChild(MakeSectionDivider());
 
         // ---- STORE ----
-        var storeTitle = UIKit.MakeDisplayLabel("MATT'S GENERAL STORE", 22);
+        var storeTitle = UIKit.MakeDisplayLabel(Tr(TK.IndStoreName), 22);
         storeTitle.HorizontalAlignment = HorizontalAlignment.Center;
         root.AddChild(storeTitle);
 
-        var storeHint = UIKit.MakeBodyLabel(
-            "Use + and \u2212 to adjust quantities. Your budget updates in real time.",
-            13, UIKit.ColGray);
+        var storeHint = UIKit.MakeBodyLabel(Tr(TK.IndStoreHint), 13, UIKit.ColGray);
         storeHint.HorizontalAlignment = HorizontalAlignment.Center;
         root.AddChild(storeHint);
 
@@ -182,7 +161,7 @@ public partial class IndependenceScreen : Control
         // ---- DEPART BUTTON ----
         root.AddChild(UIKit.MakeSpacer(8));
 
-        var departBtn = UIKit.MakeSecondaryButton("HEAD WEST", 22);
+        var departBtn = UIKit.MakeSecondaryButton(Tr(TK.IndDepart), 22);
         departBtn.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
         departBtn.CustomMinimumSize = new Vector2(300, 60);
         departBtn.Pressed += OnDepartPressed;
@@ -208,17 +187,22 @@ public partial class IndependenceScreen : Control
         descLabel.HorizontalAlignment = HorizontalAlignment.Center;
         descLabel.AutowrapMode = TextServer.AutowrapMode.WordSmart;
 
-        for (int i = 0; i < MonthNames.Length; i++)
+        // Build translated month names at call time
+        string[] monthNameKeys = { TK.IndMonthMarch, TK.IndMonthApril, TK.IndMonthMay, TK.IndMonthJune, TK.IndMonthJuly };
+        string[] monthNames = { Tr(TK.IndMonthMarch), Tr(TK.IndMonthApril), Tr(TK.IndMonthMay), Tr(TK.IndMonthJune), Tr(TK.IndMonthJuly) };
+        string[] monthDescriptions = { Tr(TK.IndMonthDescMarch), Tr(TK.IndMonthDescApril), Tr(TK.IndMonthDescMay), Tr(TK.IndMonthDescJune), Tr(TK.IndMonthDescJuly) };
+
+        for (int i = 0; i < monthNames.Length; i++)
         {
             int monthIdx = i; // capture for closure
-            var btn = UIKit.MakeSecondaryButton(MonthNames[i], 14);
+            var btn = UIKit.MakeSecondaryButton(monthNames[i], 14);
             btn.CustomMinimumSize = new Vector2(100, 40);
             btn.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
 
             btn.Pressed += () =>
             {
                 _selectedMonth = monthIdx;
-                descLabel.Text = MonthDescriptions[monthIdx];
+                descLabel.Text = monthDescriptions[monthIdx];
 
                 // Update button visuals: highlight selected
                 int childIdx = 0;
@@ -253,20 +237,20 @@ public partial class IndependenceScreen : Control
     {
         _storePanel.QueueFreeChildren();
 
-        AddStoreRow("oxen",    "YOKE OF OXEN (2 oxen)");
-        AddStoreRow("food",    "FOOD (pounds)");
-        AddStoreRow("clothes", "SETS OF CLOTHING");
-        AddStoreRow("bullets", "BOXES OF BULLETS (20 ea)");
-        AddStoreRow("wheel",   "SPARE WHEELS");
-        AddStoreRow("axle",    "SPARE AXLES");
-        AddStoreRow("tongue",  "SPARE TONGUES");
+        AddStoreRow("oxen",    Tr(TK.IndItemOxen));
+        AddStoreRow("food",    Tr(TK.IndItemFood));
+        AddStoreRow("clothes", Tr(TK.IndItemClothes));
+        AddStoreRow("bullets", Tr(TK.IndItemBullets));
+        AddStoreRow("wheel",   Tr(TK.IndItemWheel));
+        AddStoreRow("axle",    Tr(TK.IndItemAxle));
+        AddStoreRow("tongue",  Tr(TK.IndItemTongue));
     }
 
     private void AddStoreRow(string itemKey, string displayName)
     {
         float unitPrice = BasePrices[itemKey];
         int step = StepSizes[itemKey];
-        string rec = Recommendations[itemKey];
+        string rec = GetRecommendations()[itemKey];
 
         // Row container
         var panel = new PanelContainer();
@@ -292,8 +276,8 @@ public partial class IndependenceScreen : Control
 
         // Unit price
         string priceStr = itemKey == "food"
-            ? $"${unitPrice:F2}/lb"
-            : $"${unitPrice:F2} each";
+            ? string.Format(Tr(TK.IndPricePerLb), unitPrice)
+            : string.Format(Tr(TK.IndPriceEach), unitPrice);
         var lblPrice = UIKit.MakeBodyLabel(priceStr, 13, UIKit.ColGray);
         lblPrice.CustomMinimumSize = new Vector2(100, 0);
         topRow.AddChild(lblPrice);
@@ -397,7 +381,7 @@ public partial class IndependenceScreen : Control
     private void UpdateCashDisplay()
     {
         float remaining = GetRemainingCash();
-        _cashLabel.Text = $"TREASURY: ${remaining:F2}";
+        _cashLabel.Text = string.Format(Tr(TK.IndTreasury), remaining);
 
         // Red if low
         if (remaining < 50)
@@ -415,7 +399,7 @@ public partial class IndependenceScreen : Control
         // Validate: must have at least 1 yoke of oxen
         if (_cart["oxen"] < 1)
         {
-            ShowWarning("You need at least one yoke of oxen to pull the wagon!");
+            ShowWarning(Tr(TK.IndNeedOxen));
             return;
         }
 
@@ -469,7 +453,7 @@ public partial class IndependenceScreen : Control
         lbl.AutowrapMode = TextServer.AutowrapMode.WordSmart;
         vbox.AddChild(lbl);
 
-        var btnOk = UIKit.MakeSecondaryButton("OK", 16);
+        var btnOk = UIKit.MakeSecondaryButton(Tr(TK.CommonOk), 16);
         btnOk.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
         btnOk.Pressed += () => popup.QueueFree();
         vbox.AddChild(btnOk);

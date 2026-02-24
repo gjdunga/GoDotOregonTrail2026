@@ -58,7 +58,7 @@ public partial class MapScreen : Control
         AddChild(outer);
 
         // Title
-        var title = UIKit.MakeDisplayLabel("THE OREGON TRAIL", 22);
+        var title = UIKit.MakeDisplayLabel(Tr(TK.MapTitle), 22);
         title.HorizontalAlignment = HorizontalAlignment.Center;
         outer.AddChild(title);
 
@@ -114,7 +114,7 @@ public partial class MapScreen : Control
 
         // Close button
         var closeRow = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
-        var closeBtn = UIKit.MakePrimaryButton("CLOSE MAP", 18);
+        var closeBtn = UIKit.MakePrimaryButton(Tr(TK.MapClose), 18);
         closeBtn.CustomMinimumSize = new Vector2(200, 48);
         closeBtn.Pressed += () => EmitSignal(SignalName.MapClosed);
         closeRow.AddChild(closeBtn);
@@ -248,11 +248,11 @@ public partial class MapScreen : Control
                              .Replace("_", " ").ToUpper();
         int pct = (int)((float)_state.Miles / GameConstants.TargetMiles * 100f);
 
-        AddStat(row, "DATE",    dateStr);
-        AddStat(row, "MILES",   $"{_state.Miles} / {GameConstants.TargetMiles}  ({pct}%)");
-        AddStat(row, "TERRAIN", terrain);
-        AddStat(row, "WEATHER", _state.Weather.ToUpper());
-        AddStat(row, "CASH",    $"${_state.Cash:F0}");
+        AddStat(row, Tr(TK.MapStatDate),    dateStr);
+        AddStat(row, Tr(TK.MapStatMiles),   $"{_state.Miles} / {GameConstants.TargetMiles}  ({pct}%)");
+        AddStat(row, Tr(TK.MapStatTerrain), terrain);
+        AddStat(row, Tr(TK.MapStatWeather), _state.Weather.ToUpper());
+        AddStat(row, Tr(TK.MapStatCash),    $"${_state.Cash:F0}");
 
         return row;
     }

@@ -99,14 +99,14 @@ public partial class RiverCrossingScreen : Control
         // WAIT button row
         var waitRow = new HBoxContainer();
         waitRow.Alignment = BoxContainer.AlignmentMode.Center;
-        var waitBtn = UIKit.MakeSecondaryButton("WAIT FOR RIVER TO LOWER", 15);
+        var waitBtn = UIKit.MakeSecondaryButton(Tr(TK.RiverWait), 15);
         waitBtn.TooltipText = "Passes one day. River depth may change.";
         waitBtn.Pressed += OnWaitPressed;
         waitRow.AddChild(waitBtn);
         vbox.AddChild(waitRow);
 
         // Cash display
-        _cashLabel = UIKit.MakeBodyLabel($"CASH: ${_state.Cash:F2}", 14, UIKit.ColAmberDim);
+        _cashLabel = UIKit.MakeBodyLabel(string.Format(Tr(TK.RiverCash), _state.Cash), 14, UIKit.ColAmberDim);
         _cashLabel.HorizontalAlignment = HorizontalAlignment.Center;
         vbox.AddChild(_cashLabel);
     }
@@ -120,7 +120,8 @@ public partial class RiverCrossingScreen : Control
         string depthRange = $"{_river.DepthFt.min}-{_river.DepthFt.max} FT DEEP";
         string weather = _state.Weather == "clear" ? "" : $"  |  WEATHER: {_state.Weather.ToUpper()}";
 
-        var label = UIKit.MakeBodyLabel($"DEPTH: {depthRange}{weather}", 15, UIKit.ColParchment);
+        var label = UIKit.MakeBodyLabel(
+            string.Format(Tr(TK.RiverDepth), $"{depthRange}{weather}"), 15, UIKit.ColParchment);
         label.HorizontalAlignment = HorizontalAlignment.Center;
         return label;
     }
@@ -157,7 +158,7 @@ public partial class RiverCrossingScreen : Control
             if (cantAffordFerry || cantAffordGuide)
             {
                 btn.Disabled = true;
-                btn.TooltipText = "NOT ENOUGH CASH.";
+                btn.TooltipText = Tr(TK.RiverNoCash);
             }
 
             var captured = method;
@@ -171,7 +172,7 @@ public partial class RiverCrossingScreen : Control
     {
         // Re-draw depth label and method buttons with updated state
         _depthLabel.Text = BuildDepthLabel().Text;
-        _cashLabel.Text  = $"CASH: ${_state.Cash:F2}";
+        _cashLabel.Text  = string.Format(Tr(TK.RiverCash), _state.Cash);
         BuildMethodButtons();
     }
 

@@ -75,7 +75,7 @@ public partial class GameOverScreen : Control
         scroll.AddChild(vbox);
 
         // ---- CAUSE HEADER ----
-        AddCentered(vbox, UIKit.MakeDisplayLabel("GAME OVER", 34, UIKit.ColRed));
+        AddCentered(vbox, UIKit.MakeDisplayLabel(Tr(TK.GameOverTitle), 34, UIKit.ColRed));
         vbox.AddChild(UIKit.MakeSpacer(4));
 
         var (headline, flavor) = ReasonText(_reason);
@@ -89,7 +89,7 @@ public partial class GameOverScreen : Control
         vbox.AddChild(UIKit.MakeDivider());
 
         // ---- PARTY FATE ----
-        AddCentered(vbox, UIKit.MakeDisplayLabel("THE PARTY", 20));
+        AddCentered(vbox, UIKit.MakeDisplayLabel(Tr(TK.GameOverParty), 20));
 
         foreach (var p in _state.Party)
         {
@@ -99,7 +99,7 @@ public partial class GameOverScreen : Control
         vbox.AddChild(UIKit.MakeDivider());
 
         // ---- JOURNEY STATS ----
-        AddCentered(vbox, UIKit.MakeDisplayLabel("HOW FAR YOU GOT", 20));
+        AddCentered(vbox, UIKit.MakeDisplayLabel(Tr(TK.GameOverDistance), 20));
 
         var stats = new VBoxContainer();
         stats.AddThemeConstantOverride("separation", 6);
@@ -108,19 +108,19 @@ public partial class GameOverScreen : Control
         int pct = (int)((float)_state.Miles / GameConstants.TargetMiles * 100f);
         string distLabel = pct switch
         {
-            >= 95 => "SO CLOSE.",
-            >= 75 => "PAST THE BLUE MOUNTAINS.",
-            >= 60 => "THROUGH SOUTH PASS.",
-            >= 40 => "HALFWAY ACROSS THE PLAINS.",
-            >= 20 => "STILL ON THE PRAIRIE.",
-            _     => "BARELY OUT OF INDEPENDENCE.",
+            >= 95 => Tr(TK.GameOverSoClose),
+            >= 75 => Tr(TK.GameOverBlueMtn),
+            >= 60 => Tr(TK.GameOverSouthPass),
+            >= 40 => Tr(TK.GameOverHalfway),
+            >= 20 => Tr(TK.GameOverPrairie),
+            _     => Tr(TK.GameOverEarly),
         };
 
-        AddStatRow(stats, "MILES REACHED",  $"{_state.Miles} / {GameConstants.TargetMiles}");
-        AddStatRow(stats, "PROGRESS",       $"{pct}%   {distLabel}");
-        AddStatRow(stats, "DAYS ON TRAIL",  $"{_state.Day}");
-        AddStatRow(stats, "DATE",           DateCalc.DateStr(_state.Day));
-        AddStatRow(stats, "CASH LEFT",      $"${_state.Cash:F0}");
+        AddStatRow(stats, Tr(TK.GameOverMiles),    $"{_state.Miles} / {GameConstants.TargetMiles}");
+        AddStatRow(stats, Tr(TK.GameOverProgress), $"{pct}%   {distLabel}");
+        AddStatRow(stats, Tr(TK.GameOverDays),     $"{_state.Day}");
+        AddStatRow(stats, Tr(TK.GameOverDate),     DateCalc.DateStr(_state.Day));
+        AddStatRow(stats, Tr(TK.GameOverCash),     $"${_state.Cash:F0}");
 
         vbox.AddChild(stats);
         vbox.AddChild(UIKit.MakeSpacer(8));
@@ -130,12 +130,12 @@ public partial class GameOverScreen : Control
         btnRow.Alignment = BoxContainer.AlignmentMode.Center;
         btnRow.AddThemeConstantOverride("separation", 20);
 
-        var again = UIKit.MakePrimaryButton("TRY AGAIN", 18);
+        var again = UIKit.MakePrimaryButton(Tr(TK.CommonTryAgain), 18);
         again.CustomMinimumSize = new Vector2(200, 52);
         again.Pressed += () => EmitSignal(SignalName.PlayAgainRequested);
         btnRow.AddChild(again);
 
-        var menu = UIKit.MakeSecondaryButton("MAIN MENU", 18);
+        var menu = UIKit.MakeSecondaryButton(Tr(TK.CommonMainMenu), 18);
         menu.CustomMinimumSize = new Vector2(200, 52);
         menu.Pressed += () => EmitSignal(SignalName.MainMenuRequested);
         btnRow.AddChild(menu);
@@ -155,7 +155,7 @@ public partial class GameOverScreen : Control
         row.SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
 
         Color nameColor = p.Alive ? UIKit.ColParchment : UIKit.ColGray;
-        string icon = p.Alive ? "SURVIVED" : "DIED";
+        string icon = p.Alive ? Tr(TK.GameOverSurvived) : Tr(TK.GameOverDied);
         Color iconColor = p.Alive ? UIKit.ColGreen : UIKit.ColRed;
 
         var nameLbl = UIKit.MakeBodyLabel(p.Name.ToUpper(), 15, nameColor);
@@ -193,22 +193,22 @@ public partial class GameOverScreen : Control
 
     private static (string headline, string flavor) ReasonText(string reason) => reason switch
     {
-        "game_over_dead" => (
-            "EVERYONE IS DEAD.",
+        "game_over_dead"        => (
+            TranslationServer.Translate(TK.GameOverCauseAll),
             "The wagon sat still on the trail. Weeks later, another party found it empty."),
         "game_over_unconscious" => (
-            "THE PARTY FELL UNCONSCIOUS.",
+            TranslationServer.Translate(TK.GameOverCauseUncon),
             "No one was able to help the others. Days passed. No one came."),
-        "game_over_starved" => (
-            "YOU STARVED ON THE TRAIL.",
+        "game_over_starved"     => (
+            TranslationServer.Translate(TK.GameOverCauseStarve),
             "The last of the food ran out somewhere past the Platte. " +
             "The mountains were still ahead."),
-        "game_over_stranded" => (
-            "YOU WERE STRANDED.",
+        "game_over_stranded"    => (
+            TranslationServer.Translate(TK.GameOverCauseStr),
             "Without oxen or a working wagon, there was no going forward. " +
             "The wilderness closed in."),
-        "game_over_time" => (
-            "WINTER CAUGHT YOU.",
+        "game_over_time"        => (
+            TranslationServer.Translate(TK.GameOverCauseWinter),
             "The Blue Mountains filled with snow. The trail became impassable. " +
             "You waited for a spring that never came in time."),
         _ => (

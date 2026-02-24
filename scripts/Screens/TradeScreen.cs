@@ -67,7 +67,7 @@ public partial class TradeScreen : Control
         pad.AddChild(vbox);
 
         // Title
-        var title = UIKit.MakeDisplayLabel("TRAIL TRADER", 26, UIKit.ColAmber);
+        var title = UIKit.MakeDisplayLabel(Tr(TK.TradeTitle), 26, UIKit.ColAmber);
         title.HorizontalAlignment = HorizontalAlignment.Center;
         vbox.AddChild(title);
 
@@ -92,9 +92,9 @@ public partial class TradeScreen : Control
         tradeRow.AddThemeConstantOverride("separation", 20);
         tradeRow.Alignment = BoxContainer.AlignmentMode.Center;
 
-        tradeRow.AddChild(BuildTradeColumn("TRADER GIVES", offerDesc, UIKit.ColGreen));
+        tradeRow.AddChild(BuildTradeColumn(Tr(TK.TradeGives), offerDesc, UIKit.ColGreen));
         tradeRow.AddChild(BuildDividerVertical());
-        tradeRow.AddChild(BuildTradeColumn("TRADER WANTS", wantDesc, UIKit.ColAmber));
+        tradeRow.AddChild(BuildTradeColumn(Tr(TK.TradeWants), wantDesc, UIKit.ColAmber));
         vbox.AddChild(tradeRow);
 
         vbox.AddChild(UIKit.MakeDivider());
@@ -112,7 +112,7 @@ public partial class TradeScreen : Control
         btnRow.Alignment = BoxContainer.AlignmentMode.Center;
         btnRow.AddThemeConstantOverride("separation", 16);
 
-        var acceptBtn = UIKit.MakePrimaryButton("ACCEPT TRADE", 18);
+        var acceptBtn = UIKit.MakePrimaryButton(Tr(TK.TradeAccept), 18);
         acceptBtn.CustomMinimumSize = new Vector2(200, 52);
         acceptBtn.Disabled = !canAfford;
         if (!canAfford)
@@ -124,7 +124,7 @@ public partial class TradeScreen : Control
         }
         acceptBtn.Pressed += () => OnAccept(offerItem, offerQty, wantItem, wantQty);
 
-        var declineBtn = UIKit.MakeSecondaryButton("DECLINE", 18);
+        var declineBtn = UIKit.MakeSecondaryButton(Tr(TK.TradeDecline), 18);
         declineBtn.CustomMinimumSize = new Vector2(160, 52);
         declineBtn.Pressed += OnDecline;
 
@@ -176,8 +176,7 @@ public partial class TradeScreen : Control
 
     private void OnDecline()
     {
-        EmitSignal(SignalName.TradeResolved, false,
-            "YOU DECLINED THE TRADE. THE TRADER MOVED ON.");
+        EmitSignal(SignalName.TradeResolved, false, Tr(TK.TradeDeclined));
     }
 
     // =========================================================================
@@ -260,7 +259,7 @@ public partial class TradeScreen : Control
         // Show current supply of what they'll give
         if (wantItem == "cash")
         {
-            AddInventoryCell(row, "YOUR CASH", (int)_state.Cash,
+            AddInventoryCell(row, Tr(TK.TradeYourCash), (int)_state.Cash,
                 _state.Cash < wantQty ? UIKit.ColRed : UIKit.ColGreen);
         }
         else
