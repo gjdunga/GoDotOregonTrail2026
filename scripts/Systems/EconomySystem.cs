@@ -179,6 +179,87 @@ public static class EconomySystem
         return (true, $"BOUGHT {quantity}x {itemKey.Replace("_", " ").ToUpper()}. ${totalCost:F2}");
     }
 
+
+    // ========================================================================
+    // CURE PURCHASING
+    // ========================================================================
+
+    /// <summary>
+    /// Buy a cure for one party member afflicted with illnessKey.
+    /// Cost comes from State.CurePrices (seeded by RegenCurePrices on EnterTown).
+    /// Clears illness fields on the first living member found with that illness.
+    /// </summary>
+    public static (bool success, string message) BuyCure(GameState st, string illnessKey)
+    {
+        if (!st.CurePrices.TryGetValue(illnessKey, out int price))
+            return (false, "CURE NOT AVAILABLE HERE.");
+
+        if (st.Cash < price)
+            return (false, $"NOT ENOUGH MONEY. NEED ${price}.");
+
+        var patient = st.Living().Find(p => p.Illness == illnessKey);
+        if (patient == null)
+            return (false, "NO ONE IN THE PARTY HAS THIS ILLNESS.");
+
+        st.Cash -= price;
+        patient.Illness = "";
+        patient.IllnessSeverity = 0f;
+        patient.IllnessDays = 0;
+
+        st.Ledger.Add(new()
+        {
+            { "day", st.Day },
+            { "action", "buy_cure" },
+            { "item", illnessKey },
+            { "qty", 1 },
+            { "cost", (float)price },
+            { "store", st.AtTownStoreKey },
+        });
+
+        string illName = GameData.IllnessDisplayName(illnessKey).ToUpper();
+        return (true, $"CURED {patient.Name.ToUpper()} OF {illName}.");
+    }
+
+    // ========================================================================
+    // SOLDOUT SEEDING
+    // ========================================================================
+
+    /// <summary>
+    /// Roll soldout state for each supply category at the current store.
+    /// Called once per store visit from FortStoreScreen._Ready so the state
+    /// is stable for the duration of the visit.
+    /// Keys written: "{storeKey}_{category}" e.g. "fort_kearny_food".
+    /// Categories: food, ammo, clothes, livestock, parts, cures.
+    /// </summary>
+    public static void SeedStoreSoldout(GameState st, string storeKey)
+    {
+        if (!GameData.StoreProfiles.TryGetValue(storeKey, out var profile)) return;
+
+        string[] categories = { "food", "ammo", "clothes", "livestock", "parts", "cures" };
+        foreach (string cat in categories)
+        {
+            string key = $"{storeKey}_{cat}";
+            // Only roll if not already seeded this visit
+            if (!st.StoreSoldout.ContainsKey(key))
+            {
+                float baseChance = profile.SoldoutBase.GetValueOrDefault(cat, 0f);
+                st.StoreSoldout[key] = GameManager.RandFloat() < baseChance;
+            }
+        }
+    }
+
+    /// <summary>Returns true if the given category is soldout at the given store.</summary>
+    public static bool IsSoldout(GameState st, string storeKey, string category) =>
+        st.StoreSoldout.GetValueOrDefault($"{storeKey}_{category}", false);
+
+    /// <summary>Clear soldout flags for a store on departure so the next visit re-rolls.</summary>
+    public static void ClearStoreSoldout(GameState st, string storeKey)
+    {
+        string[] categories = { "food", "ammo", "clothes", "livestock", "parts", "cures" };
+        foreach (string cat in categories)
+            st.StoreSoldout.Remove($"{storeKey}_{cat}");
+    }
+
     /// <summary>Regenerate cure prices for current store.</summary>
     public static void RegenCurePrices(GameState st, string? storeKey = null)
     {

@@ -54,6 +54,7 @@ public partial class MainScene : Control
     private SaveSlotScreen? _saveSlotScreen;
     private IndependenceScreen? _independenceScreen;
     private RiverCrossingScreen? _riverCrossingScreen;
+    private FortStoreScreen? _fortStoreScreen;
     private DevConsole? _devConsole;
 
     public override void _Ready()
@@ -633,6 +634,45 @@ public partial class MainScene : Control
     }
 
     // ========================================================================
+    // FORT STORE SCREEN
+    // ========================================================================
+
+    private void ShowFortStoreScreen()
+    {
+        _flowState = FlowState.Store;
+        HideChoiceMenu();
+
+        _fortStoreScreen = new FortStoreScreen();
+        _fortStoreScreen.Initialize(GameManager.Instance.State);
+        AddChild(_fortStoreScreen);
+        _fortStoreScreen.StoreExited += OnStoreExited;
+    }
+
+    private void RemoveFortStoreScreen()
+    {
+        if (_fortStoreScreen != null)
+        {
+            _fortStoreScreen.StoreExited -= OnStoreExited;
+            _fortStoreScreen.QueueFree();
+            _fortStoreScreen = null;
+        }
+    }
+
+    private void OnStoreExited()
+    {
+        // Clear soldout flags so next visit to this store re-rolls stock
+        EconomySystem.ClearStoreSoldout(
+            GameManager.Instance.State,
+            GameManager.Instance.State.AtTownStoreKey);
+
+        RemoveFortStoreScreen();
+
+        _flowState = FlowState.AwaitChoice;
+        UpdateHUD();
+        ShowChoiceMenu();
+    }
+
+    // ========================================================================
     // TRAVEL LOOP
     // ========================================================================
 
@@ -832,7 +872,7 @@ public partial class MainScene : Control
                 break;
             case 3:
                 if (!string.IsNullOrEmpty(gm.State.AtTownStoreKey))
-                    ShowMessage("STORE SCREEN: COMING SOON");
+                    ShowFortStoreScreen();
                 else
                     ShowMessage("NO STORE HERE.");
                 break;
