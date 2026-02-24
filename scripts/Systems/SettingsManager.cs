@@ -66,6 +66,13 @@ public partial class SettingsManager : Node
     /// <summary>
     /// Debug authorization. Set internally by DevConsole password check.
     /// Not exposed in any user-facing menu.
+    ///
+    /// KNOWN BYPASS: This value is persisted to user://settings.json as plaintext.
+    /// A player who edits that file can set debug_unlocked:true without the password.
+    /// Threat model: the SHA256 gate defends against players who don't know the file
+    /// exists. Editing settings.json is outside the casual-editing threat scope.
+    /// Acceptable for a single-player Patreon perk. If threat model changes, move to
+    /// a session-only field (remove from SettingsData) or store a keyed hash here.
     /// </summary>
     public bool DebugUnlocked
     {

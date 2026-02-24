@@ -269,4 +269,139 @@ public static class GameData
         { "spare_axle", "parts" },
         { "spare_tongue", "parts" },
     };
+
+    // ========================================================================
+    // PARTY NAME POOLS
+    // ========================================================================
+    // Sources:
+    //   Male/female given names: SSA 1880s rankings (closest available decade to
+    //   the 1850 trail era) supplemented with 1850 US Census first-name frequencies
+    //   for names that were common earlier in the century.
+    //   Surnames: 2010 US Census top surnames filtered to names that were common
+    //   among midwest/east-coast emigrant populations in the 1840s-1860s.
+    //   Hispanic surnames included because significant numbers of California-bound
+    //   emigrants traveled through or originated from Mexican territory.
+    //
+    // Usage: GameData.RandomPartyName(rng) returns one "FirstName LastName" string.
+    // With 140 first names x 200 last names this pool produces 28,000 unique combos.
+    // ========================================================================
+
+    public static readonly string[] MaleFirstNames =
+    {
+        "John", "William", "James", "George", "Charles", "Frank", "Joseph",
+        "Henry", "Robert", "Thomas", "Edward", "Harry", "Walter", "Arthur",
+        "Fred", "Albert", "Samuel", "Clarence", "Louis", "David", "Richard",
+        "Ernest", "Roy", "Andrew", "Jesse", "Oscar", "Daniel", "Benjamin",
+        "Carl", "Sam", "Alfred", "Earl", "Peter", "Elmer", "Frederick",
+        "Howard", "Lewis", "Ralph", "Herbert", "Paul", "Lee", "Herman",
+        "Martin", "Jacob", "Michael", "Claude", "Eugene", "Francis",
+        "Raymond", "Harvey", "Clyde", "Edwin", "Edgar", "Lawrence", "Bert",
+        "Chester", "Jack", "Otto", "Luther", "Guy", "Floyd", "Ira", "Ray",
+        "Hugh", "Isaac", "Oliver", "Patrick", "Homer", "Theodore", "Leonard",
+        "Leo", "Alexander", "August", "Harold", "Allen", "Archie", "Philip",
+        "Stephen", "Horace", "Warren", "Clifford", "Sidney", "Milton",
+        "Willis", "Everett", "Leslie", "Rufus", "Alvin", "Perry", "Victor",
+        "Calvin", "Harrison", "Norman", "Wesley", "Amos", "Caleb", "Nathan",
+        "Ezra", "Elijah", "Silas", "Josiah", "Jeremiah", "Cornelius",
+        "Augustus", "Cyrus", "Thaddeus", "Zebulon", "Reuben", "Levi",
+        "Abel", "Hiram", "Orville", "Solomon", "Jonah", "Ezekiel", "Elias",
+        "Nehemiah", "Jabez", "Obadiah", "Hezekiah", "Phineas", "Lorenzo",
+        "Sylvester", "Schuyler", "Truman", "Monroe", "Franklin",
+    };
+
+    public static readonly string[] FemaleFirstNames =
+    {
+        "Mary", "Sarah", "Elizabeth", "Margaret", "Susan", "Nancy", "Martha",
+        "Hannah", "Ann", "Jane", "Emma", "Lucy", "Catherine", "Eleanor",
+        "Rachel", "Rebecca", "Ruth", "Lydia", "Esther", "Abigail", "Harriet",
+        "Caroline", "Louisa", "Eliza", "Frances", "Helen", "Alice", "Julia",
+        "Sophia", "Amanda", "Amelia", "Augusta", "Charlotte", "Clara", "Cora",
+        "Cornelia", "Dorothy", "Edith", "Ellen", "Emily", "Eunice", "Fannie",
+        "Flora", "Florence", "Grace", "Hattie", "Henrietta", "Ida", "Irene",
+        "Isabel", "Josephine", "Laura", "Lavinia", "Lena", "Louise", "Lucinda",
+        "Mabel", "Matilda", "Maud", "Melissa", "Mildred", "Minerva", "Miranda",
+        "Miriam", "Nelly", "Olive", "Ophelia", "Phoebe", "Polly", "Priscilla",
+        "Prudence", "Rhoda", "Rosa", "Rose", "Selina", "Stella", "Tabitha",
+        "Temperance", "Theodora", "Theresa", "Viola", "Virginia", "Winifred",
+        "Zenobia", "Almira", "Aurelia", "Beulah", "Blanche", "Calista",
+        "Candace", "Celestia", "Celinda", "Clementine", "Cordelia", "Delphine",
+        "Dorcas", "Elvira", "Evaline", "Hester", "Jemima", "Kezia", "Leah",
+        "Leticia", "Lois", "Lottie", "Luella", "Malinda", "Malvina", "Mercy",
+        "Millicent", "Minnie", "Naomi", "Narcissa", "Patience", "Paulina",
+        "Pearl", "Penelope", "Roxanna", "Sabra", "Salome", "Samantha",
+        "Serena", "Sophronia", "Thankful", "Tryphena", "Ursula", "Wealthy",
+        "Zilpha", "Adelia", "Agatha", "Agnes",
+    };
+
+    public static readonly string[] LastNames =
+    {
+        "Smith", "Johnson", "Williams", "Brown", "Jones", "Miller", "Davis",
+        "Wilson", "Anderson", "Taylor", "Thomas", "Jackson", "White", "Harris",
+        "Martin", "Thompson", "Robinson", "Clark", "Lewis", "Lee", "Walker",
+        "Hall", "Allen", "Young", "King", "Wright", "Hill", "Scott", "Green",
+        "Adams", "Baker", "Nelson", "Carter", "Mitchell", "Roberts", "Turner",
+        "Phillips", "Campbell", "Parker", "Evans", "Edwards", "Collins",
+        "Stewart", "Morris", "Murphy", "Cook", "Rogers", "Morgan", "Peterson",
+        "Cooper", "Reed", "Bailey", "Bell", "Kelly", "Howard", "Ward", "Cox",
+        "Richardson", "Wood", "Watson", "Brooks", "Bennett", "Gray", "Hughes",
+        "Price", "Myers", "Long", "Foster", "Sanders", "Ross", "Powell",
+        "Sullivan", "Russell", "Jenkins", "Perry", "Butler", "Barnes",
+        "Fisher", "Henderson", "Coleman", "Simmons", "Patterson", "Jordan",
+        "Reynolds", "Hamilton", "Graham", "Wallace", "Griffin", "West", "Cole",
+        "Hayes", "Gibson", "Bryant", "Ellis", "Stevens", "Murray", "Ford",
+        "Marshall", "Owens", "McDonald", "Harrison", "Kennedy", "Wells",
+        "Olson", "Webb", "Tucker", "Freeman", "Burns", "Henry", "Snyder",
+        "Simpson", "Crawford", "Porter", "Mason", "Shaw", "Gordon", "Hunter",
+        "Hicks", "Dixon", "Hunt", "Palmer", "Robertson", "Black", "Holmes",
+        "Stone", "Boyd", "Mills", "Warren", "Fox", "Rose", "Rice", "Ferguson",
+        "Nichols", "Ryan", "Weaver", "Fowler", "Hawkins", "Grant", "Hanson",
+        "Dunn", "Hudson", "Spencer", "Gardner", "Stephens", "Payne", "Pierce",
+        "Berry", "Matthews", "Arnold", "Willis", "Bishop", "Mann", "Fleming",
+        "Austin", "Kelley", "Nash", "Clayton", "Todd", "Knight", "Lawrence",
+        "Norman", "Boone", "Chandler", "Wheeler", "Owen", "Lynch", "Barker",
+        "Garrison", "Hammond", "Chambers", "Duncan", "Burke", "Garrett",
+        "Howell", "Barton", "Cunningham", "Harper", "Perkins", "Hutchinson",
+        "Sutton", "Montgomery", "Schultz", "Morrow", "Maxwell", "Ingram",
+        "Becker", "Booth", "Parsons", "Caldwell", "Briggs", "Knox",
+        "Goodwin", "Barnett", "Holt", "Phelps", "Curtis", "Norton", "Ramsey",
+        "Lyons", "Harrington", "Lawson", "Wilkins", "Bates", "Townsend",
+        "Swanson", "Marsh", "Greer", "Frazier", "Giles", "Kirby", "Vance",
+        "Deleon", "Salazar", "Medina", "Reyes", "Cruz", "Rivera", "Ramos",
+    };
+
+    /// <summary>
+    /// Generate one random full name by combining a random first name (male or
+    /// female, 50/50) with a random last name.
+    /// Call with a shared Random instance to avoid correlated seeds.
+    /// The 140 first names x 200 last names produce 28,000 unique combinations.
+    /// </summary>
+    public static string RandomPartyName(Random rng)
+    {
+        string first = rng.Next(2) == 0
+            ? MaleFirstNames[rng.Next(MaleFirstNames.Length)]
+            : FemaleFirstNames[rng.Next(FemaleFirstNames.Length)];
+        string last = LastNames[rng.Next(LastNames.Length)];
+        return $"{first} {last}";
+    }
+
+    /// <summary>
+    /// Generate a set of n unique party names. Uses rejection sampling to avoid
+    /// duplicate full names within the same party. The pool is large enough (28k
+    /// combos) that collisions are rare and the loop terminates quickly.
+    /// </summary>
+    public static string[] RandomPartyNames(int count, Random? rng = null)
+    {
+        rng ??= new Random();
+        var seen  = new System.Collections.Generic.HashSet<string>(count);
+        var names = new string[count];
+        for (int i = 0; i < count; i++)
+        {
+            string name;
+            int safety = 0;
+            do { name = RandomPartyName(rng); safety++; }
+            while (!seen.Add(name) && safety < 1000);
+            names[i] = name;
+        }
+        return names;
+    }
 }

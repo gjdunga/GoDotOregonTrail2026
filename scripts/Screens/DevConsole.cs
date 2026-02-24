@@ -174,7 +174,7 @@ public partial class DevConsole : Control
             {
                 foreach (var p in gm.State.Party)
                 {
-                    p.Health = 100;
+                    p.Health = GameConstants.HealthMaximum; // 1000, NOT 100 (100 = unconscious threshold)
                     p.Illness = "";
                     p.IllnessDays = 0;
                     p.Injury = "";

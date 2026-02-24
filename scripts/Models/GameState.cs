@@ -66,6 +66,13 @@ public class GameState
     [JsonPropertyName("route_choice_made")] public bool RouteChoiceMade { get; set; } = false;
 
     // ---- Events / State ----
+    // INVARIANT: StopFlags, LastEvent, PendingEncounter, and PendingRepair store
+    // values as native C# types (bool, int, string) and are read back via 'as T?' casts
+    // in the same session they were written. They MUST NOT survive a save/load boundary.
+    // After JSON round-trip, System.Text.Json deserializes object? values as JsonElement,
+    // so 'as bool?' or 'as int?' casts would silently return null. Autosave triggers (fort
+    // arrival, hunt start, fish start) all fire AFTER these fields are consumed and cleared.
+    // If you add new persistent StopFlags, extract them with ((JsonElement)v).GetXxx() instead.
     [JsonPropertyName("last_event")] public Dictionary<string, object?> LastEvent { get; set; } = new();
     [JsonPropertyName("last_card")] public string LastCard { get; set; } = "";
     [JsonPropertyName("stop_flags")] public Dictionary<string, object?> StopFlags { get; set; } = new();

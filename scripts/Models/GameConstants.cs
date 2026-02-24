@@ -287,8 +287,4 @@ public static class GameConstants
     public const int BulkBuyFoodAmount = 100;
     public const int BulkBuyBulletsAmount = 100;
 
-    // ========================================================================
-    // DEBUG
-    // ========================================================================
-    public const string DebugDefaultPassword = "A123456";
 }

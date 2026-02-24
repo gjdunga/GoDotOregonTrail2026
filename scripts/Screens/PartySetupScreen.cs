@@ -36,7 +36,8 @@ public partial class PartySetupScreen : Control
     // ---- State ----
     private int _step = 0;  // 0 = occupation, 1 = names
     private string _selectedOccupation = "";
-    private readonly string[] _partyNames = { "Gabriel", "Dude", "Andrea", "Tank", "Mellow" };
+    // Generated fresh on every new game from GameData.RandomPartyNames (28k unique combos)
+    private readonly string[] _partyNames = GameData.RandomPartyNames(GameConstants.PartySize);
     private readonly LineEdit[] _nameEdits = new LineEdit[5];
 
     // ---- Node refs built in code ----
@@ -312,18 +313,23 @@ public partial class PartySetupScreen : Control
         // Validate: at least the leader has a name
         if (string.IsNullOrWhiteSpace(_partyNames[0]))
         {
-            _partyNames[0] = "Gabriel";
-            _nameEdits[0].Text = "Gabriel";
+            _partyNames[0] = GameData.RandomPartyName(new System.Random());
+            _nameEdits[0].Text = _partyNames[0];
         }
 
-        // Fill empty names with defaults
-        string[] defaults = { "Gabriel", "Dude", "Andrea", "Tank", "Mellow" };
+        // Fill empty slots with fresh random names (unique within the party)
+        var seen = new System.Collections.Generic.HashSet<string>(_partyNames.Where(n => !string.IsNullOrWhiteSpace(n)));
+        var rng  = new System.Random();
         for (int i = 0; i < 5; i++)
         {
             if (string.IsNullOrWhiteSpace(_partyNames[i]))
             {
-                _partyNames[i] = defaults[i];
-                _nameEdits[i].Text = defaults[i];
+                string name;
+                int safety = 0;
+                do { name = GameData.RandomPartyName(rng); safety++; }
+                while (!seen.Add(name) && safety < 1000);
+                _partyNames[i] = name;
+                _nameEdits[i].Text = name;
             }
         }
 
