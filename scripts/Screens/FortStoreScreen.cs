@@ -159,6 +159,10 @@ public partial class FortStoreScreen : Control
         // Cures
         if (stock.Cures)
             BuildCuresSection();
+
+        // Blacksmith wagon services
+        if (stock.Blacksmith)
+            BuildBlacksmithSection();
     }
 
     private void BuildItemSection(
@@ -340,6 +344,129 @@ public partial class FortStoreScreen : Control
             }
         };
         row.AddChild(buyBtn);
+
+        return row;
+    }
+
+    // =========================================================================
+    // BLACKSMITH SECTION
+    // =========================================================================
+
+    private void BuildBlacksmithSection()
+    {
+        var heading = UIKit.MakeDisplayLabel("BLACKSMITH SERVICES", 18, UIKit.ColAmberDim);
+        heading.HorizontalAlignment = HorizontalAlignment.Left;
+        _contentRoot.AddChild(heading);
+
+        float locationMult = 1.0f;
+        if (GameData.StoreProfiles.TryGetValue(_storeKey, out var prof)
+            && prof.PriceMult.TryGetValue("repair", out float rm))
+            locationMult = rm;
+
+        float inspectCost = (float)Math.Round(GameConstants.BlacksmithInspectBaseCost * locationMult, 2);
+        float repairCost  = (float)Math.Round(GameConstants.BlacksmithRepairBaseCost  * locationMult, 2);
+        float tuneupCost  = (float)Math.Round(GameConstants.BlacksmithTuneupBaseCost  * locationMult, 2);
+
+        if (_state.Occupation == "carpenter") { inspectCost *= GameConstants.ServiceCarpenterDiscount; repairCost *= GameConstants.ServiceCarpenterDiscount; tuneupCost *= GameConstants.ServiceCarpenterDiscount; }
+        else if (_state.Occupation == "banker") { inspectCost *= GameConstants.ServiceBankerGouge; repairCost *= GameConstants.ServiceBankerGouge; tuneupCost *= GameConstants.ServiceBankerGouge; }
+
+        inspectCost = (float)Math.Round(inspectCost, 2);
+        repairCost  = (float)Math.Round(repairCost,  2);
+        tuneupCost  = (float)Math.Round(tuneupCost,  2);
+
+        int wagonPct = (int)(_state.Wagon / (float)GameConstants.ConditionMaximum * 100f);
+        bool tuneupActive = _state.TuneupUntilMiles > _state.Miles;
+
+        // Inspection
+        _contentRoot.AddChild(BuildServiceRow(
+            "WAGON INSPECTION",
+            $"See exact wagon condition. Current: {wagonPct}%",
+            $"${inspectCost:F2}",
+            canAfford: _state.Cash >= inspectCost,
+            disabled: false,
+            onBuy: () =>
+            {
+                if (_state.Cash < inspectCost) { ShowFlash("NOT ENOUGH CASH.", false); return; }
+                _state.Cash -= inspectCost;
+                int wPct = (int)(_state.Wagon / (float)GameConstants.ConditionMaximum * 100f);
+                int oPct = (int)(_state.OxenCondition / (float)GameConstants.ConditionMaximum * 100f);
+                string pending = _state.PendingRepair != null
+                    ? $" BROKEN {(_state.PendingRepair["part"] as string ?? "PART").ToUpper()} FOUND."
+                    : "";
+                ShowFlash($"WAGON: {wPct}%  OXEN: {oPct}%{pending}", true);
+                RefreshStatus();
+            }));
+
+        // Full repair
+        bool repairNeeded = _state.Wagon < 800 || _state.PendingRepair != null;
+        _contentRoot.AddChild(BuildServiceRow(
+            "FIELD REPAIR",
+            repairNeeded
+                ? $"Guaranteed quality repair. Wagon at {wagonPct}%."
+                : "Wagon is in good condition. Repair not needed.",
+            $"${repairCost:F2}",
+            canAfford: _state.Cash >= repairCost,
+            disabled: !repairNeeded,
+            onBuy: () =>
+            {
+                if (_state.Cash < repairCost) { ShowFlash("NOT ENOUGH CASH.", false); return; }
+                _state.Cash -= repairCost;
+                string result = RepairSystem.BlacksmithRepair(_state);
+                ShowFlash(result, true);
+                RefreshStatus();
+                RebuildContent();
+            }));
+
+        // Tuneup
+        _contentRoot.AddChild(BuildServiceRow(
+            "FULL WAGON TUNEUP",
+            tuneupActive
+                ? $"Tuneup active until mile {_state.TuneupUntilMiles}. Cannot stack."
+                : $"Reduces breakdown chance for {GameConstants.TuneupDurationMiles} miles.",
+            $"${tuneupCost:F2}",
+            canAfford: _state.Cash >= tuneupCost,
+            disabled: tuneupActive,
+            onBuy: () =>
+            {
+                if (_state.Cash < tuneupCost) { ShowFlash("NOT ENOUGH CASH.", false); return; }
+                _state.Cash -= tuneupCost;
+                string result = RepairSystem.BlacksmithTuneup(_state);
+                ShowFlash(result, true);
+                RefreshStatus();
+            }));
+
+        _contentRoot.AddChild(UIKit.MakeDivider());
+    }
+
+    private Control BuildServiceRow(
+        string name, string description, string price,
+        bool canAfford, bool disabled, System.Action onBuy)
+    {
+        var row = new HBoxContainer();
+        row.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        row.AddThemeConstantOverride("separation", 8);
+
+        var nameCol = new VBoxContainer();
+        nameCol.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        nameCol.AddChild(UIKit.MakeBodyLabel(name, 15,
+            disabled ? UIKit.ColGray : UIKit.ColParchment));
+
+        var descLbl = UIKit.MakeBodyLabel(description, 12, UIKit.ColGray);
+        descLbl.AutowrapMode = TextServer.AutowrapMode.WordSmart;
+        nameCol.AddChild(descLbl);
+        row.AddChild(nameCol);
+
+        var priceLbl = UIKit.MakeBodyLabel(price, 14,
+            canAfford ? UIKit.ColAmber : UIKit.ColRed);
+        priceLbl.CustomMinimumSize = new Vector2(60, 0);
+        priceLbl.VerticalAlignment = VerticalAlignment.Center;
+        row.AddChild(priceLbl);
+
+        var btn = UIKit.MakeSecondaryButton("BUY", 14);
+        btn.CustomMinimumSize = new Vector2(60, 40);
+        btn.Disabled = disabled || !canAfford;
+        btn.Pressed += () => onBuy();
+        row.AddChild(btn);
 
         return row;
     }

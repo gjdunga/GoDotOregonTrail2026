@@ -150,6 +150,11 @@ public static class GameConstants
     public const float RepairSkillCarpenter = 0.78f;
 
     public const float BlacksmithRepairQualityBonus = 0.2f;
+    public const float BlacksmithTuneupBreakdownReduction = 0.40f;   // 40% breakdown reduction while tuneup active
+    public const float BarlowToll = 5.0f;
+    public const float BlacksmithInspectBaseCost  = 10.0f;
+    public const float BlacksmithRepairBaseCost   = 30.0f;
+    public const float BlacksmithTuneupBaseCost   = 50.0f;
     public const int BlacksmithVoucherDurationDays = 10;
     public const float BlacksmithVoucherBreakdownReduction = 0.5f;
 

@@ -100,17 +100,21 @@ public static class TravelSystem
     /// <summary>Calculate daily travel distance based on pace, weather, terrain, cargo.</summary>
     public static int CalculateDailyDistance(GameState st)
     {
-        if (st.Pace == "rest") return 0;
-
-        // Stranded: no oxen or wagon is completely wrecked. Increment counter
-        // and return 0. GameManager.CheckFailStates fires game_over_stranded
-        // after GameConstants.GameOverStrandedDays consecutive days.
-        if (st.AnyAlive() && st.IsStranded())
+        // Stranded check fires only when the cause is mechanical (no oxen or wrecked wagon),
+        // NOT when the player deliberately chose to rest. A resting party is not stranded;
+        // they are camped. The stranded counter resets if the player changes pace or the
+        // mechanical condition clears (e.g. oxen purchased at fort).
+        if (st.AnyAlive() && st.IsStranded() && st.Pace != "rest")
         {
             st.StrandedDays++;
             return 0;
         }
-        st.StrandedDays = 0; // Reset if condition clears (e.g. new oxen purchased at fort)
+        else if (!st.IsStranded())
+        {
+            st.StrandedDays = 0; // Reset when condition clears
+        }
+
+        if (st.Pace == "rest") return 0;
 
         int baseMin, baseMax;
         if (st.Pace == "grueling")

@@ -30,6 +30,7 @@ public partial class MainScene : Control
     private CanvasLayer _uiLayer = null!;
     private Control _hud = null!;
     private PanelContainer _messagePanel = null!;
+    private TextureRect _cardImage = null!;
     private Label _messageLabel = null!;
     private Control _choicePanel = null!;
     private Label _dateLabel = null!;
@@ -38,6 +39,8 @@ public partial class MainScene : Control
     private Label _cashLabel = null!;
     private Label _foodLabel = null!;
     private Label _healthLabel = null!;
+    private Label _paceLabel   = null!;
+    private Label _rationsLabel = null!;
 
     // Game flow state
     private enum FlowState { Splash, MainMenu, Setup, Travel, AwaitChoice, Store, Rest, Hunt, Fish, River, GameOver, Victory }
@@ -58,6 +61,8 @@ public partial class MainScene : Control
     private HuntScreen? _huntScreen;
     private FishScreen? _fishScreen;
     private RolesScreen? _rolesScreen;
+    private PaceRationsPanel? _pacePanel;
+    private RouteChoiceScreen? _routeChoiceScreen;
     private MapScreen? _mapScreen;
     private VictoryScreen? _victoryScreen;
     private GameOverScreen? _gameOverScreen;
@@ -157,6 +162,18 @@ public partial class MainScene : Control
         _healthLabel = MakeHudLabel("HEALTH: GOOD", 14, bodyFont, UIKit.ColGreen);
         hudRow.AddChild(_healthLabel);
 
+        hudRow.AddChild(MakeHudSep());
+
+        // Pace
+        _paceLabel = MakeHudLabel("PACE: STEADY", 14, bodyFont, UIKit.ColParchment);
+        hudRow.AddChild(_paceLabel);
+
+        hudRow.AddChild(MakeHudSep());
+
+        // Rations
+        _rationsLabel = MakeHudLabel("RATIONS: FILLING", 14, bodyFont, UIKit.ColParchment);
+        hudRow.AddChild(_rationsLabel);
+
         // ---- MESSAGE PANEL (bottom center) ----
         _messagePanel = new PanelContainer();
         _messagePanel.Visible = false;
@@ -164,7 +181,7 @@ public partial class MainScene : Control
         _messagePanel.SetAnchor(Side.Right, 0.85f);
         _messagePanel.SetAnchor(Side.Top, 1.0f);
         _messagePanel.SetAnchor(Side.Bottom, 1.0f);
-        _messagePanel.SetOffset(Side.Top, -140);
+        _messagePanel.SetOffset(Side.Top, -280);   // expanded to fit card image + text
         _messagePanel.SetOffset(Side.Bottom, -16);
         _messagePanel.SetOffset(Side.Left, 0);
         _messagePanel.SetOffset(Side.Right, 0);
@@ -191,7 +208,22 @@ public partial class MainScene : Control
         _messageLabel.AddThemeFontOverride("font", bodyFont);
         _messageLabel.AddThemeFontSizeOverride("font_size", 16);
         _messageLabel.AddThemeColorOverride("font_color", UIKit.ColParchment);
-        _messagePanel.AddChild(_messageLabel);
+        // Event card image (hidden by default)
+        _cardImage = new TextureRect
+        {
+            ExpandMode  = TextureRect.ExpandModeEnum.IgnoreSize,
+            StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+            CustomMinimumSize = new Vector2(0, 120),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            Visible = false,
+        };
+
+        // The message panel now uses a VBoxContainer to stack image + text
+        var msgVbox = new VBoxContainer();
+        msgVbox.AddThemeConstantOverride("separation", 8);
+        msgVbox.AddChild(_cardImage);
+        msgVbox.AddChild(_messageLabel);
+        _messagePanel.AddChild(msgVbox);
 
         _uiLayer.AddChild(_messagePanel);
 
@@ -246,7 +278,7 @@ public partial class MainScene : Control
         row1.AddChild(MakeChoiceButton("CONTINUE", 1));
         row1.AddChild(MakeChoiceButton("CHECK MAP", 2));
         row1.AddChild(MakeChoiceButton("VISIT STORE", 3));
-        row1.AddChild(MakeChoiceButton("REST", 4));
+        row1.AddChild(MakeChoiceButton("PACE/RATIONS", 4));
 
         // Row 2
         row2.AddChild(MakeChoiceButton("GO HUNTING", 5));
@@ -693,7 +725,7 @@ public partial class MainScene : Control
         {
             string? eventText = gm.State.LastEvent.GetValueOrDefault("text", null) as string;
             if (eventText != null)
-                ShowMessage(eventText);
+                ShowMessage(eventText, gm.State.LastCard);
         }
 
         if (gm.State.PendingRepair != null)
@@ -732,10 +764,23 @@ public partial class MainScene : Control
         {
             string townName = gm.State.PendingStopKey ?? "";
             gm.EnterTown(townName);
-            ShowMessage($"YOU HAVE REACHED {townName.ToUpper()}.");
             PlayMusic("res://assets/audio/OregonTrail2026_General_Fort_Score_V1a.mp3");
             gm.State.PendingStopType = null;
-            gm.State.PendingStopKey = null;
+            gm.State.PendingStopKey  = null;
+
+            // Show arrival message with landmark background image
+            var lm = Array.Find(GameData.Landmarks, l => l.Name == townName);
+            string arrivalText = lm?.ArrivalText ?? $"YOU HAVE REACHED {townName.ToUpper()}.";
+            string? bgImg = lm?.BgImage;
+            ShowMessage(arrivalText, bgImg);
+
+            // Queue next-stop hint as follow-up message
+            if (lm?.NextStopHint != null)
+                _messageQueue.Enqueue("__text__:" + lm.NextStopHint);
+
+            // The Dalles: queue route choice trigger after hint is dismissed
+            if (townName == "The Dalles" && !gm.State.RouteChoiceMade)
+                _messageQueue.Enqueue("__route_choice__");
         }
         else if (gm.State.PendingStopType == "river")
         {
@@ -810,6 +855,16 @@ public partial class MainScene : Control
                         _awaitingClick = false;
                         HandleGameEnd(next["__game_end__:".Length..]);
                     }
+                    else if (next == "__route_choice__")
+                    {
+                        _messagePanel.Visible = false;
+                        _awaitingClick = false;
+                        ShowRouteChoiceScreen();
+                    }
+                    else if (next.StartsWith("__text__:"))
+                    {
+                        ShowMessage(next["__text__:".Length..]);
+                    }
                     else
                     {
                         ShowMessage(next);
@@ -867,8 +922,7 @@ public partial class MainScene : Control
                     ShowMessage("NO STORE HERE.");
                 break;
             case 4:
-                gm.Rest(1);
-                ShowMessage("YOU REST FOR 1 DAY.");
+                ShowPaceRationsPanel();
                 break;
             case 5:
                 if (gm.State.Supplies.GetValueOrDefault("bullets", 0) <= 0)
@@ -1102,6 +1156,74 @@ public partial class MainScene : Control
     }
 
     // ========================================================================
+    // PACE / RATIONS PANEL
+    // ========================================================================
+
+    private void ShowPaceRationsPanel()
+    {
+        HideChoiceMenu();
+
+        _pacePanel = new PaceRationsPanel();
+        _pacePanel.Initialize(GameManager.Instance.State);
+        AddChild(_pacePanel);
+        _pacePanel.Confirmed += OnPaceRationsConfirmed;
+    }
+
+    private void RemovePaceRationsPanel()
+    {
+        if (_pacePanel != null)
+        {
+            _pacePanel.Confirmed -= OnPaceRationsConfirmed;
+            _pacePanel.QueueFree();
+            _pacePanel = null;
+        }
+    }
+
+    private void OnPaceRationsConfirmed()
+    {
+        RemovePaceRationsPanel();
+        UpdateHUD();
+        ShowChoiceMenu();
+    }
+
+    // ========================================================================
+    // ROUTE CHOICE SCREEN
+    // ========================================================================
+
+    private void ShowRouteChoiceScreen()
+    {
+        _flowState = FlowState.AwaitChoice;
+        HideChoiceMenu();
+
+        _routeChoiceScreen = new RouteChoiceScreen();
+        _routeChoiceScreen.Initialize(GameManager.Instance.State);
+        AddChild(_routeChoiceScreen);
+        _routeChoiceScreen.RouteChosen += OnRouteChosen;
+    }
+
+    private void RemoveRouteChoiceScreen()
+    {
+        if (_routeChoiceScreen != null)
+        {
+            _routeChoiceScreen.RouteChosen -= OnRouteChosen;
+            _routeChoiceScreen.QueueFree();
+            _routeChoiceScreen = null;
+        }
+    }
+
+    private void OnRouteChosen(string choice)
+    {
+        RemoveRouteChoiceScreen();
+        UpdateHUD();
+
+        string msg = choice == "barlow"
+            ? $"BARLOW ROAD CHOSEN. $5 TOLL PAID. THE ROAD IS ROUGH BUT DRY."
+            : "COLUMBIA RIVER ROUTE CHOSEN. PREPARE FOR THE CROSSING AHEAD.";
+        ShowMessage(msg);
+        // After message dismiss, OnMessageDismissed -> ShowChoiceMenu (FlowState.AwaitChoice)
+    }
+
+    // ========================================================================
     // ROLES SCREEN
     // ========================================================================
 
@@ -1154,9 +1276,24 @@ public partial class MainScene : Control
             _background.Texture = GD.Load<Texture2D>(path);
     }
 
-    private void ShowMessage(string text)
+    private void ShowMessage(string text, string? cardImagePath = null)
     {
         _messageLabel.Text = text;
+
+        bool hasImage = !string.IsNullOrEmpty(cardImagePath)
+                        && ResourceLoader.Exists(cardImagePath);
+        _cardImage.Visible = hasImage;
+        if (hasImage)
+        {
+            _cardImage.Texture = GD.Load<Texture2D>(cardImagePath!);
+            // Expand panel when image is shown, shrink when not
+            _messagePanel.SetOffset(Side.Top, -280);
+        }
+        else
+        {
+            _messagePanel.SetOffset(Side.Top, -140);
+        }
+
         _messagePanel.Visible = true;
         _awaitingClick = true;
         HideChoiceMenu();
@@ -1212,5 +1349,35 @@ public partial class MainScene : Control
             };
             _healthLabel.AddThemeColorOverride("font_color", healthColor);
         }
+
+        // Pace
+        string paceStr = st.Pace.ToUpper() switch
+        {
+            "REST"     => "REST",
+            "GRUELING" => "GRUELING",
+            _          => "STEADY",
+        };
+        _paceLabel.Text = $"PACE: {paceStr}";
+        _paceLabel.AddThemeColorOverride("font_color", paceStr switch
+        {
+            "REST"     => UIKit.ColGreen,
+            "GRUELING" => UIKit.ColRed,
+            _          => UIKit.ColParchment,
+        });
+
+        // Rations
+        string ratStr = st.Rations.ToLower() switch
+        {
+            "bare" or "bare bones" or "barebones" => "BARE",
+            "meager" or "meagre"                  => "MEAGER",
+            _                                     => "FILLING",
+        };
+        _rationsLabel.Text = $"RATIONS: {ratStr}";
+        _rationsLabel.AddThemeColorOverride("font_color", ratStr switch
+        {
+            "BARE"   => UIKit.ColRed,
+            "MEAGER" => UIKit.ColAmber,
+            _        => UIKit.ColGreen,
+        });
     }
 }

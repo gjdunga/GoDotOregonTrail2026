@@ -43,6 +43,14 @@ public static class RepairSystem
         if (CargoSystem.CargoWeight(st) > CargoSystem.CargoCapacity(st))
             baseChance *= GameConstants.OverloadBreakdownRiskMult;
 
+        // Blacksmith tuneup reduces breakdown chance for TuneupDurationMiles
+        if (st.TuneupUntilMiles > st.Miles)
+            baseChance *= (1f - GameConstants.BlacksmithTuneupBreakdownReduction);
+
+        // Blacksmith voucher: additional reduction for BlacksmithVoucherDurationDays
+        if (st.BlacksmithVoucherUntil > st.Day)
+            baseChance *= (1f - GameConstants.BlacksmithVoucherBreakdownReduction);
+
         if (GameManager.RandFloat() >= baseChance) return;
 
         // Select which part breaks
@@ -123,6 +131,42 @@ public static class RepairSystem
             "farmer" => GameConstants.RepairSkillFarmer,
             _ => GameConstants.RepairSkillBanker,
         };
+    }
+
+    /// <summary>
+    /// Blacksmith repair: guaranteed quality at (skill + BlacksmithRepairQualityBonus).
+    /// Restores wagon condition substantially. Clears PendingRepair if set.
+    /// Returns a result message.
+    /// </summary>
+    public static string BlacksmithRepair(GameState st)
+    {
+        float quality = Math.Min(1.0f,
+            GetRepairSkill(st.Occupation) + GameConstants.BlacksmithRepairQualityBonus);
+        quality = Math.Max(quality, 0.75f); // floor at 75% quality regardless of occupation
+
+        // Clear any pending repair
+        if (st.PendingRepair != null)
+        {
+            string part = st.PendingRepair["part"] as string ?? "wheel";
+            st.RepairQuality[part] = quality;
+            st.PendingRepair = null;
+        }
+
+        int restored = (int)(300 * quality);
+        st.Wagon = Math.Min(GameConstants.ConditionMaximum, st.Wagon + restored);
+        return $"BLACKSMITH REPAIRED YOUR WAGON. +{restored} CONDITION.";
+    }
+
+    /// <summary>
+    /// Wagon tuneup: sets TuneupUntilMiles and BlacksmithVoucherUntil.
+    /// Returns a result message.
+    /// </summary>
+    public static string BlacksmithTuneup(GameState st)
+    {
+        st.TuneupUntilMiles = st.Miles + GameConstants.TuneupDurationMiles;
+        st.BlacksmithVoucherUntil = st.Day + GameConstants.BlacksmithVoucherDurationDays;
+        st.BlacksmithVouchers++;
+        return $"WAGON TUNED UP. REDUCED BREAKDOWN RISK FOR {GameConstants.TuneupDurationMiles} MILES.";
     }
 
     private static string SelectWeighted(string[] items, float[] weights)

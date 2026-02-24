@@ -63,6 +63,7 @@ public class GameState
 
     // ---- Route ----
     [JsonPropertyName("route_choice")] public string RouteChoice { get; set; } = "";
+    [JsonPropertyName("route_choice_made")] public bool RouteChoiceMade { get; set; } = false;
 
     // ---- Events / State ----
     [JsonPropertyName("last_event")] public Dictionary<string, object?> LastEvent { get; set; } = new();
