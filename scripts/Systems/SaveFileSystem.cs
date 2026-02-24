@@ -69,6 +69,19 @@ public static class SaveFileSystem
     // ========================================================================
 
     /// <summary>
+    /// Whitelist-validate a slot identifier before it touches the filesystem.
+    /// Valid values: single digit "0"-"9" for manual slots, "auto" for auto-save.
+    /// Anything else is rejected to prevent path traversal or key confusion.
+    /// </summary>
+    private static void ValidateSlotId(string slotId)
+    {
+        bool valid = slotId == AutoSlotId ||
+                     (slotId.Length == 1 && slotId[0] >= '0' && slotId[0] <= '9');
+        if (!valid)
+            throw new ArgumentException($"Invalid slot ID '{slotId}'. Must be 0-9 or 'auto'.");
+    }
+
+    /// <summary>
     /// Save the current GameState to the specified slot.
     /// Rotates current -> backup before writing.
     /// </summary>
@@ -80,6 +93,7 @@ public static class SaveFileSystem
     {
         try
         {
+            ValidateSlotId(slotId);
             string path = GetSlotPath(slotId);
             EnsureSaveDir();
 
@@ -152,6 +166,7 @@ public static class SaveFileSystem
     /// <returns>Tuple of (GameState?, errorMessage). State is null on failure.</returns>
     public static (GameState? State, string Message) Load(string slotId)
     {
+        ValidateSlotId(slotId);
         string path = GetSlotPath(slotId);
         if (!GodotFileAccess.FileExists(path))
             return (null, "Save file not found.");
@@ -183,6 +198,7 @@ public static class SaveFileSystem
     /// <summary>Read metadata for a slot without decrypting the game state.</summary>
     public static SaveSlotMeta? ReadMeta(string slotId)
     {
+        ValidateSlotId(slotId);
         string path = GetSlotPath(slotId);
         if (!GodotFileAccess.FileExists(path))
             return null;
@@ -219,6 +235,7 @@ public static class SaveFileSystem
     /// <summary>Rename a manual save slot.</summary>
     public static bool RenameSlot(string slotId, string newName)
     {
+        ValidateSlotId(slotId);
         if (slotId == AutoSlotId) return false; // can't rename auto-save
 
         string path = GetSlotPath(slotId);
@@ -260,6 +277,7 @@ public static class SaveFileSystem
     /// <summary>Delete a save slot entirely.</summary>
     public static bool DeleteSlot(string slotId)
     {
+        ValidateSlotId(slotId);
         string path = GetSlotPath(slotId);
         if (!GodotFileAccess.FileExists(path)) return true; // already gone
 
@@ -278,8 +296,11 @@ public static class SaveFileSystem
     }
 
     /// <summary>Check if a slot has a save file.</summary>
-    public static bool SlotExists(string slotId) =>
-        GodotFileAccess.FileExists(GetSlotPath(slotId));
+    public static bool SlotExists(string slotId)
+    {
+        ValidateSlotId(slotId);
+        return GodotFileAccess.FileExists(GetSlotPath(slotId));
+    }
 
     // ========================================================================
     // AUTO-SAVE TRIGGERS (called by GameManager)
@@ -330,7 +351,9 @@ public static class SaveFileSystem
 
     /// <summary>
     /// Decrypt and verify: reads [IV(16) | HMAC(32) | Ciphertext(N)],
-    /// decrypts, verifies HMAC, returns decompressed bytes.
+    /// decrypts, verifies HMAC against compressed bytes, then decompresses.
+    /// HMAC is checked before decompression so a tampered payload cannot
+    /// trigger a decompression bomb.
     /// Throws on tamper detection or corruption.
     /// </summary>
     private static byte[] DecryptAndVerify(byte[] payload, byte[] key)
@@ -369,7 +392,9 @@ public static class SaveFileSystem
             compressed = output.ToArray();
         }
 
-        // Verify HMAC (constant-time comparison)
+        // Verify HMAC (constant-time comparison) BEFORE decompressing.
+        // This prevents a crafted payload from causing a decompression bomb
+        // against a file that hasn't passed integrity verification.
         byte[] computedHmac = ComputeHmac(compressed, key);
         if (!CryptographicOperations.FixedTimeEquals(storedHmac, computedHmac))
             throw new InvalidDataException("HMAC mismatch: save data has been tampered with or is corrupted.");
@@ -383,18 +408,18 @@ public static class SaveFileSystem
 
     /// <summary>
     /// Derive a 256-bit AES key from the slot identifier.
-    /// Uses PBKDF2 with a composite salt built from split constants.
+    /// Uses PBKDF2: slot-specific password, fixed salt, 100k iterations, SHA256.
     /// Each slot gets a unique key, preventing cross-slot copy attacks.
     /// </summary>
     private static byte[] DeriveKey(string slotId)
     {
+        // password: slot-specific token (the secret differentiator per slot)
+        // salt: fixed application constant (not secret, raises bar vs generic attacks)
+        byte[] password = Encoding.UTF8.GetBytes($"slot::{slotId}::key");
         byte[] salt = BuildSaltBlock();
-        byte[] slotBytes = Encoding.UTF8.GetBytes($"slot::{slotId}::key");
-        byte[] combined = salt.Concat(slotBytes).ToArray();
 
-        // PBKDF2: 100,000 iterations, SHA256, 32-byte output
         using var pbkdf2 = new Rfc2898DeriveBytes(
-            combined,
+            password,
             salt,
             iterations: 100_000,
             HashAlgorithmName.SHA256);
@@ -421,12 +446,29 @@ public static class SaveFileSystem
         return output.ToArray();
     }
 
-    private static byte[] GZipDecompress(byte[] data)
+    /// <summary>
+    /// Decompress GZip data with a hard cap on output size.
+    /// A 50 MB limit is generous for any real save file (typical saves are
+    /// under 100 KB compressed) and prevents decompression bomb DoS.
+    /// Called only after HMAC verification passes, so this is a second
+    /// layer of defense against corrupted-but-not-tampered data.
+    /// </summary>
+    private static byte[] GZipDecompress(byte[] data, int maxBytes = 50 * 1024 * 1024)
     {
         using var input = new MemoryStream(data);
         using var gz = new GZipStream(input, CompressionMode.Decompress);
         using var output = new MemoryStream();
-        gz.CopyTo(output);
+
+        var buffer = new byte[81920];
+        int bytesRead;
+        while ((bytesRead = gz.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            if (output.Length + bytesRead > maxBytes)
+                throw new InvalidDataException(
+                    $"Decompressed save exceeds {maxBytes / (1024 * 1024)} MB safety limit.");
+            output.Write(buffer, 0, bytesRead);
+        }
+
         return output.ToArray();
     }
 

@@ -625,17 +625,21 @@ public partial class MainScene : Control
     private void HandleGameEnd(string reason)
     {
         var gm = GameManager.Instance;
-        _flowState = FlowState.GameOver;
+
+        // Victory and defeat are distinct flow states. chapter_complete reaches Oregon;
+        // all other reasons are failures. Both currently return to main menu on dismiss,
+        // but Victory can expand to its own screen without touching routing logic.
+        _flowState = reason == "chapter_complete" ? FlowState.Victory : FlowState.GameOver;
 
         string message = reason switch
         {
-            "game_over_dead" => "EVERYONE IS DEAD.",
+            "game_over_dead"        => "EVERYONE IS DEAD.",
             "game_over_unconscious" => "THE PARTY FELL UNCONSCIOUS AND NEVER RECOVERED.",
-            "game_over_starved" => "YOU RAN OUT OF FOOD FOR TOO LONG.\nTHE PARTY STARVED ON THE TRAIL.",
-            "game_over_stranded" => "YOU CANNOT MOVE ON.\nWITHOUT OXEN OR A WORKING WAGON, THE JOURNEY ENDS HERE.",
-            "game_over_time" => "WINTER CAME. YOU RAN OUT OF TIME.",
-            "chapter_complete" => "WILLAMETTE VALLEY. YOU MADE IT!\nSURVIVORS CONTINUE TO CHAPTER 2.",
-            _ => $"GAME OVER: {reason}",
+            "game_over_starved"     => "YOU RAN OUT OF FOOD FOR TOO LONG.\nTHE PARTY STARVED ON THE TRAIL.",
+            "game_over_stranded"    => "YOU CANNOT MOVE ON.\nWITHOUT OXEN OR A WORKING WAGON, THE JOURNEY ENDS HERE.",
+            "game_over_time"        => "WINTER CAME. YOU RAN OUT OF TIME.",
+            "chapter_complete"      => "WILLAMETTE VALLEY. YOU MADE IT!\nSURVIVORS CONTINUE TO CHAPTER 2.",
+            _                       => $"GAME OVER: {reason}",
         };
 
         SetBackground("res://assets/images/bg/bg_oregon_city_arrival.webp");
@@ -761,7 +765,12 @@ public partial class MainScene : Control
         }
         else if (_flowState == FlowState.GameOver)
         {
-            // Return to main menu after game over
+            // Return to main menu after defeat
+            ShowMainMenu();
+        }
+        else if (_flowState == FlowState.Victory)
+        {
+            // Return to main menu after victory (placeholder until Victory screen exists)
             ShowMainMenu();
         }
     }

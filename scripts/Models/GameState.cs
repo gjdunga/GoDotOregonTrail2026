@@ -116,19 +116,19 @@ public class GameState
 
     // ---- Town/Store state ----
     [JsonPropertyName("fort_trade_offers")] public List<Dictionary<string, object?>> FortTradeOffers { get; set; } = new();
-    public string AtTownName { get; set; } = "";
-    public string AtTownStoreKey { get; set; } = "";
-    public Dictionary<string, float> StorePriceMult { get; set; } = new();
-    public Dictionary<string, bool> StoreSoldout { get; set; } = new();
-    public Dictionary<string, float> StorePriceCache { get; set; } = new();
+    [JsonPropertyName("at_town_name")]      public string AtTownName { get; set; } = "";
+    [JsonPropertyName("at_town_store_key")] public string AtTownStoreKey { get; set; } = "";
+    [JsonPropertyName("store_price_mult")]  public Dictionary<string, float> StorePriceMult { get; set; } = new();
+    [JsonPropertyName("store_soldout")]     public Dictionary<string, bool> StoreSoldout { get; set; } = new();
+    [JsonPropertyName("store_price_cache")] public Dictionary<string, float> StorePriceCache { get; set; } = new();
 
     // ---- Journal ----
-    [JsonPropertyName("journal")] public List<Dictionary<string, object?>> Journal { get; set; } = new();
-    [JsonPropertyName("journal_seq")] public int JournalSeq { get; set; } = 0;
-    public int LastNoteNudgeDay { get; set; } = 0;
-    public Dictionary<string, float> TempStorePriceMultByStore { get; set; } = new();
-    public int ServiceDiscountRemaining { get; set; } = 0;
-    public int ServiceDiscountUntilDay { get; set; } = 0;
+    [JsonPropertyName("journal")]      public List<Dictionary<string, object?>> Journal { get; set; } = new();
+    [JsonPropertyName("journal_seq")]  public int JournalSeq { get; set; } = 0;
+    [JsonPropertyName("last_note_nudge_day")]           public int LastNoteNudgeDay { get; set; } = 0;
+    [JsonPropertyName("temp_store_price_mult_by_store")] public Dictionary<string, float> TempStorePriceMultByStore { get; set; } = new();
+    [JsonPropertyName("service_discount_remaining")]    public int ServiceDiscountRemaining { get; set; } = 0;
+    [JsonPropertyName("service_discount_until_day")]    public int ServiceDiscountUntilDay { get; set; } = 0;
 
     // ========================================================================
     // METHODS
