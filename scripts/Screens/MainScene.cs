@@ -55,6 +55,9 @@ public partial class MainScene : Control
     private IndependenceScreen? _independenceScreen;
     private RiverCrossingScreen? _riverCrossingScreen;
     private FortStoreScreen? _fortStoreScreen;
+    private HuntScreen? _huntScreen;
+    private FishScreen? _fishScreen;
+    private RolesScreen? _rolesScreen;
     private DevConsole? _devConsole;
 
     public override void _Ready()
@@ -882,26 +885,19 @@ public partial class MainScene : Control
                 break;
             case 5:
                 if (gm.State.Supplies.GetValueOrDefault("bullets", 0) <= 0)
-                    ShowMessage("NO AMMO.");
+                    ShowMessage("NO AMMO. LOAD UP BEFORE HUNTING.");
                 else
-                {
-                    int meat = GameManager.RandInt(20, 120);
-                    gm.State.Supplies["bullets"] = Math.Max(0, gm.State.Supplies["bullets"] - GameManager.RandInt(5, 15));
-                    CargoSystem.AddFoodWithCapacity(gm.State, meat);
-                    ShowMessage($"YOU BROUGHT BACK {meat} LBS OF FOOD.");
-                }
+                    ShowHuntScreen();
                 break;
             case 6:
-                int fish = GameManager.RandInt(GameConstants.FishYieldMin, GameConstants.FishYieldMax);
-                CargoSystem.AddFoodWithCapacity(gm.State, fish);
-                ShowMessage($"YOU CAUGHT {fish} LBS OF FISH.");
+                ShowFishScreen();
                 break;
             case 7:
                 gm.QuickSave();
                 ShowMessage("GAME SAVED.");
                 break;
             case 8:
-                ShowMessage("ROLES: DRIVER, HUNTER, MEDIC, SCOUT");
+                ShowRolesScreen();
                 break;
         }
 
@@ -928,6 +924,129 @@ public partial class MainScene : Control
             // Return to main menu after victory (placeholder until Victory screen exists)
             ShowMainMenu();
         }
+    }
+
+    // ========================================================================
+    // HUNT SCREEN
+    // ========================================================================
+
+    private void ShowHuntScreen()
+    {
+        _flowState = FlowState.Hunt;
+        HideChoiceMenu();
+
+        _huntScreen = new HuntScreen();
+        _huntScreen.Initialize(GameManager.Instance.State);
+        AddChild(_huntScreen);
+        _huntScreen.HuntComplete += OnHuntComplete;
+    }
+
+    private void RemoveHuntScreen()
+    {
+        if (_huntScreen != null)
+        {
+            _huntScreen.HuntComplete -= OnHuntComplete;
+            _huntScreen.QueueFree();
+            _huntScreen = null;
+        }
+    }
+
+    private void OnHuntComplete()
+    {
+        var st = GameManager.Instance.State;
+        int meat = st.StopFlags.GetValueOrDefault("hunt_meat_added") as int? ?? 0;
+        int ammo = st.StopFlags.GetValueOrDefault("hunt_ammo_used")  as int? ?? 0;
+        st.StopFlags.Remove("hunt_meat_added");
+        st.StopFlags.Remove("hunt_ammo_used");
+
+        RemoveHuntScreen();
+
+        string msg = meat > 0
+            ? $"YOU RETURNED WITH {meat} LBS OF MEAT. USED {ammo} BULLETS."
+            : $"EMPTY HANDED. USED {ammo} BULLETS.";
+
+        string? fail = GameManager.Instance.CheckFailStates();
+        if (fail != null) { HandleGameEnd(fail); return; }
+
+        UpdateHUD();
+        _flowState = FlowState.AwaitChoice;
+        ShowMessage(msg);
+    }
+
+    // ========================================================================
+    // FISH SCREEN
+    // ========================================================================
+
+    private void ShowFishScreen()
+    {
+        _flowState = FlowState.Fish;
+        HideChoiceMenu();
+
+        _fishScreen = new FishScreen();
+        _fishScreen.Initialize(GameManager.Instance.State);
+        AddChild(_fishScreen);
+        _fishScreen.FishComplete += OnFishComplete;
+    }
+
+    private void RemoveFishScreen()
+    {
+        if (_fishScreen != null)
+        {
+            _fishScreen.FishComplete -= OnFishComplete;
+            _fishScreen.QueueFree();
+            _fishScreen = null;
+        }
+    }
+
+    private void OnFishComplete()
+    {
+        var st = GameManager.Instance.State;
+        int added = st.StopFlags.GetValueOrDefault("fish_added") as int? ?? 0;
+        st.StopFlags.Remove("fish_added");
+
+        RemoveFishScreen();
+
+        string msg = added > 0
+            ? $"YOU CAUGHT {added} LBS OF FISH."
+            : "THE FISH WEREN'T BITING TODAY.";
+
+        string? fail = GameManager.Instance.CheckFailStates();
+        if (fail != null) { HandleGameEnd(fail); return; }
+
+        UpdateHUD();
+        _flowState = FlowState.AwaitChoice;
+        ShowMessage(msg);
+    }
+
+    // ========================================================================
+    // ROLES SCREEN
+    // ========================================================================
+
+    private void ShowRolesScreen()
+    {
+        HideChoiceMenu();
+
+        _rolesScreen = new RolesScreen();
+        _rolesScreen.Initialize(GameManager.Instance.State);
+        AddChild(_rolesScreen);
+        _rolesScreen.RolesConfirmed += OnRolesConfirmed;
+    }
+
+    private void RemoveRolesScreen()
+    {
+        if (_rolesScreen != null)
+        {
+            _rolesScreen.RolesConfirmed -= OnRolesConfirmed;
+            _rolesScreen.QueueFree();
+            _rolesScreen = null;
+        }
+    }
+
+    private void OnRolesConfirmed()
+    {
+        RemoveRolesScreen();
+        UpdateHUD();
+        ShowChoiceMenu();
     }
 
     // ========================================================================
