@@ -102,6 +102,16 @@ public static class TravelSystem
     {
         if (st.Pace == "rest") return 0;
 
+        // Stranded: no oxen or wagon is completely wrecked. Increment counter
+        // and return 0. GameManager.CheckFailStates fires game_over_stranded
+        // after GameConstants.GameOverStrandedDays consecutive days.
+        if (st.AnyAlive() && st.IsStranded())
+        {
+            st.StrandedDays++;
+            return 0;
+        }
+        st.StrandedDays = 0; // Reset if condition clears (e.g. new oxen purchased at fort)
+
         int baseMin, baseMax;
         if (st.Pace == "grueling")
         {

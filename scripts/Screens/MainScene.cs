@@ -674,6 +674,30 @@ public partial class MainScene : Control
             gm.State.PendingRepair = null;
         }
 
+        // Trade encounter: EventSystem sets PendingEncounter but nothing consumed it.
+        // Show a simple inline trade result for now and clear the field.
+        // Proper trade UI (offer/counter/decline) can replace this block later.
+        if (gm.State.PendingEncounter != null)
+        {
+            string encounterType = gm.State.PendingEncounter.GetValueOrDefault("type") as string ?? "";
+            if (encounterType == "trade")
+            {
+                // Simulate a basic trade: swap food for bullets if player has surplus food
+                int playerFood = gm.State.Supplies.GetValueOrDefault("food", 0);
+                if (playerFood >= 40)
+                {
+                    gm.State.Supplies["food"] = playerFood - 30;
+                    gm.State.Supplies["bullets"] = gm.State.Supplies.GetValueOrDefault("bullets", 0) + 20;
+                    _messageQueue.Enqueue("THE TRADER EXCHANGED 30 LBS OF FOOD FOR 20 BULLETS.");
+                }
+                else
+                {
+                    _messageQueue.Enqueue("THE TRADER HAD NOTHING YOU NEEDED. HE MOVED ON.");
+                }
+            }
+            gm.State.PendingEncounter = null;
+        }
+
         if (gm.State.PendingStopType == "town")
         {
             string townName = gm.State.PendingStopKey ?? "";

@@ -140,6 +140,16 @@ public class GameState
     /// <summary>Returns true if any party member is alive.</summary>
     public bool AnyAlive() => Party.Any(p => p.Alive);
 
+    /// <summary>
+    /// Returns true if the wagon cannot move: no oxen remain or wagon
+    /// condition has reached zero. Used to gate StrandedDays increment.
+    /// Failure condition: oxen count zero, OxenCondition zero, OR Wagon zero.
+    /// All three are checked because a river crossing or rockslide can zero
+    /// Wagon without zeroing OxenCondition, and visa versa.
+    /// </summary>
+    public bool IsStranded() =>
+        Supplies.GetValueOrDefault("oxen", 0) <= 0 || OxenCondition <= 0 || Wagon <= 0;
+
     /// <summary>Serialize game state to JSON for save files.</summary>
     public string ToJson() => JsonSerializer.Serialize(this, _jsonOptions);
 

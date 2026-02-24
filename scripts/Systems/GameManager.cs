@@ -178,6 +178,9 @@ public partial class GameManager : Node
         if (landmark?.StoreKey != null)
         {
             State.AtTownStoreKey = landmark.StoreKey;
+            // Populate cure prices for this store. Must run before any store
+            // screen renders so prices are ready on first display.
+            EconomySystem.RegenCurePrices(State, landmark.StoreKey);
         }
         if (!State.VisitedLandmarks.Contains(townName))
         {
