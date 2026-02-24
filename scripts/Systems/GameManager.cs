@@ -83,20 +83,21 @@ public partial class GameManager : Node
             int distance = TravelSystem.CalculateDailyDistance(State);
             int newMiles = Math.Min(State.Miles + distance, GameConstants.TargetMiles);
 
-            // Check for stops (towns, rivers) between old and new position
+            // Check for stops (towns, scenic landmarks, rivers) between old and new position
             var (stopType, stopData) = TravelSystem.NextStopBetween(State, oldMiles, newMiles);
             if (stopType != null)
             {
-                // Snap to the stop location
-                newMiles = stopType == "town"
-                    ? ((GameData.LandmarkInfo)stopData!).Miles
-                    : ((GameData.RiverInfo)stopData!).Miles;
+                // Snap to the stop location.
+                // Both town and landmark stops carry a LandmarkInfo; river carries RiverInfo.
+                newMiles = stopType == "river"
+                    ? ((GameData.RiverInfo)stopData!).Miles
+                    : ((GameData.LandmarkInfo)stopData!).Miles;
 
                 State.PendingStopType = stopType;
-                if (stopType == "town")
-                    State.PendingStopKey = ((GameData.LandmarkInfo)stopData!).Name;
-                else
+                if (stopType == "river")
                     State.PendingStopKey = ((GameData.RiverInfo)stopData!).Key;
+                else
+                    State.PendingStopKey = ((GameData.LandmarkInfo)stopData!).Name;
 
                 info["stop_type"] = stopType;
                 info["stop_data"] = stopData!;
@@ -112,11 +113,16 @@ public partial class GameManager : Node
             HealthSystem.IllnessTick(State, resting: false);
             HealthSystem.DailyRecovery(State, resting: false, inTown: false);
 
-            // Random events
-            EventSystem.TryRandomEvent(State);
-
-            // Breakdown check
-            RepairSystem.TryBreakdown(State);
+            // Suppress random events and breakdown checks when the player arrives at a
+            // notable stop (town, landmark, or river). The arrival IS the day's story event.
+            // If both fire, MainScene would show the event card then immediately overwrite
+            // it with the arrival message. Suppressing here keeps the narrative clean.
+            bool stopDay = State.PendingStopType != null;
+            if (!stopDay)
+            {
+                EventSystem.TryRandomEvent(State);
+                RepairSystem.TryBreakdown(State);
+            }
 
             info["miles_traveled"] = newMiles - oldMiles;
         }

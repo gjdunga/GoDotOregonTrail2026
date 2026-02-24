@@ -42,6 +42,11 @@ public static class HealthSystem
             st.Supplies["food"] = 0;
             st.StarveDays++;
 
+            // Set starvation card for display
+            st.LastCard  = "res://assets/images/events/evt_starvation.webp";
+            st.LastEvent = new() { { "type", "starvation" },
+                { "text", "NO FOOD REMAINS. THE PARTY GROWS WEAKER WITH EACH MILE." } };
+
             // Starvation damage to all living members
             foreach (var p in st.Living())
             {
@@ -127,6 +132,11 @@ public static class HealthSystem
                 victim.Illness = ill.Key;
                 victim.IllnessSeverity = ill.Severity;
                 victim.IllnessDays = GameManager.RandInt(3, 12);
+
+                // Wire card image for display in MainScene
+                st.LastCard  = "res://assets/images/events/evt_illness_generic.webp";
+                st.LastEvent = new() { { "type", "illness" },
+                    { "text", $"{victim.Name.ToUpper()} HAS COME DOWN WITH {ill.Name.ToUpper()}." } };
                 break; // Only one illness per tick
             }
         }

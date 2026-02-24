@@ -257,7 +257,7 @@ public partial class RouteChoiceScreen : Control
 
         int wagonPct  = (int)(_state.Wagon / (float)GameConstants.ConditionMaximum * 100f);
         int oxenPct   = (int)(_state.OxenCondition / (float)GameConstants.ConditionMaximum * 100f);
-        int oxenCount = _state.Supplies.GetValueOrDefault("yoke_oxen", 0);
+        int oxenCount = _state.Supplies.GetValueOrDefault("oxen", 0);
 
         AddStat(row, "CASH",         $"${_state.Cash:F0}");
         AddStat(row, "WAGON COND",   $"{wagonPct}%", wagonPct < 40 ? UIKit.ColRed : UIKit.ColGreen);
@@ -294,7 +294,7 @@ public partial class RouteChoiceScreen : Control
     {
         int wagonPct = (int)(_state.Wagon / (float)GameConstants.ConditionMaximum * 100f);
         int oxenPct  = (int)(_state.OxenCondition / (float)GameConstants.ConditionMaximum * 100f);
-        int oxenCount = _state.Supplies.GetValueOrDefault("yoke_oxen", 0);
+        int oxenCount = _state.Supplies.GetValueOrDefault("oxen", 0);
 
         return wagonPct < 50 || oxenPct < 50 || oxenCount < 2
                || _state.Cash < 15f; // can't afford ferry either

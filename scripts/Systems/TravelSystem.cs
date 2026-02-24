@@ -199,24 +199,55 @@ public static class TravelSystem
     // STOP DETECTION
     // ========================================================================
 
-    /// <summary>Find the next unvisited town or uncrossed river between miles a and b.</summary>
+    /// <summary>
+    /// Find the nearest unvisited stop (town, scenic landmark, or river) between miles a and b.
+    /// Returns ("town"|"landmark"|"river", data) for the nearest, or (null, null) if none.
+    ///
+    /// Route-choice gates:
+    ///   Columbia River only fires when RouteChoice == "river".
+    ///   Barlow Road landmark only fires when RouteChoice == "barlow".
+    /// </summary>
     public static (string? type, object? data) NextStopBetween(GameState st, int a, int b)
     {
-        var town = NextUnvisitedTownBetween(st, a, b);
-        var river = NextUncrossedRiverBetween(st, a, b);
+        var town     = NextUnvisitedTownBetween(st, a, b);
+        var landmark = NextUnvisitedNonTownLandmarkBetween(st, a, b);
+        var river    = NextUncrossedRiverBetween(st, a, b);
 
-        if (town != null && river != null)
-            return town.Miles <= river.Miles ? ("town", town) : ("river", river);
-        if (town != null) return ("town", town);
-        if (river != null) return ("river", river);
-        return (null, null);
+        int townMiles     = town     != null ? town.Miles     : int.MaxValue;
+        int landmarkMiles = landmark != null ? landmark.Miles : int.MaxValue;
+        int riverMiles    = river    != null ? river.Miles    : int.MaxValue;
+
+        int minMiles = Math.Min(townMiles, Math.Min(landmarkMiles, riverMiles));
+
+        if (minMiles == int.MaxValue) return (null, null);
+        if (minMiles == townMiles)     return ("town",     town!);
+        if (minMiles == landmarkMiles) return ("landmark", landmark!);
+        return ("river", river!);
     }
 
     private static GameData.LandmarkInfo? NextUnvisitedTownBetween(GameState st, int a, int b)
     {
         var visited = new HashSet<string>(st.VisitedLandmarks);
         return GameData.Landmarks
-            .Where(lm => lm.IsTown && lm.StoreKey != null && lm.Miles > a && lm.Miles <= b && !visited.Contains(lm.Name))
+            .Where(lm => lm.IsTown && lm.StoreKey != null
+                         && lm.Miles > a && lm.Miles <= b
+                         && !visited.Contains(lm.Name))
+            .OrderBy(lm => lm.Miles)
+            .FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Scenic/pass landmarks that show arrival text but open no store.
+    /// Barlow Road toll gate only triggers when RouteChoice == "barlow".
+    /// </summary>
+    private static GameData.LandmarkInfo? NextUnvisitedNonTownLandmarkBetween(GameState st, int a, int b)
+    {
+        var visited = new HashSet<string>(st.VisitedLandmarks);
+        return GameData.Landmarks
+            .Where(lm => !lm.IsTown
+                         && lm.Miles > a && lm.Miles <= b
+                         && !visited.Contains(lm.Name)
+                         && (lm.Key != "barlow_road" || st.RouteChoice == "barlow"))
             .OrderBy(lm => lm.Miles)
             .FirstOrDefault();
     }
@@ -225,7 +256,10 @@ public static class TravelSystem
     {
         var crossed = new HashSet<string>(st.CrossedRivers);
         return GameData.Rivers
-            .Where(rv => rv.Miles > a && rv.Miles <= b && !crossed.Contains(rv.Key))
+            .Where(rv => rv.Miles > a && rv.Miles <= b
+                         && !crossed.Contains(rv.Key)
+                         // Columbia only fires when player chose river route.
+                         && (rv.Key != "columbia" || st.RouteChoice == "river"))
             .OrderBy(rv => rv.Miles)
             .FirstOrDefault();
     }

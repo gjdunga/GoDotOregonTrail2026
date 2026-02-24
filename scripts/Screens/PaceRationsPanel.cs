@@ -190,9 +190,7 @@ public partial class PaceRationsPanel : Control
 
     private void HighlightPace(Button btn, string pace)
     {
-        bool active = _state.Pace == pace ||
-                      (_state.Pace == "bare bones" && pace == "bare") ||
-                      (_state.Pace == "bare bones" && pace == "bare");
+        bool active = _state.Pace == pace;
         ApplyHighlight(btn, active, pace switch
         {
             "rest"     => UIKit.ColGreen,

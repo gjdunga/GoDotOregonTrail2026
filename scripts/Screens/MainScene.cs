@@ -63,6 +63,7 @@ public partial class MainScene : Control
     private RolesScreen? _rolesScreen;
     private PaceRationsPanel? _pacePanel;
     private RouteChoiceScreen? _routeChoiceScreen;
+    private TradeScreen? _tradeScreen;
     private MapScreen? _mapScreen;
     private VictoryScreen? _victoryScreen;
     private GameOverScreen? _gameOverScreen;
@@ -716,7 +717,10 @@ public partial class MainScene : Control
             return;
         }
 
-        string bg = TravelSystem.TravelBgForState(gm.State);
+        // Set background before travel. If pace is rest, show camp art.
+        string bg = gm.State.Pace == "rest"
+            ? TravelSystem.CampBgForState(gm.State)
+            : TravelSystem.TravelBgForState(gm.State);
         SetBackground(bg);
 
         var info = gm.TravelOneDay();
@@ -736,26 +740,17 @@ public partial class MainScene : Control
             gm.State.PendingRepair = null;
         }
 
-        // Trade encounter: EventSystem sets PendingEncounter but nothing consumed it.
-        // Show a simple inline trade result for now and clear the field.
-        // Proper trade UI (offer/counter/decline) can replace this block later.
+        // Trade encounter: show TradeScreen after the encounter card message is dismissed.
+        // The encounter card has already been shown via ShowMessage above (LastCard set).
+        // We queue the trade screen as a sentinel so it fires after the card dismiss.
         if (gm.State.PendingEncounter != null)
         {
             string encounterType = gm.State.PendingEncounter.GetValueOrDefault("type") as string ?? "";
             if (encounterType == "trade")
             {
-                // Simulate a basic trade: swap food for bullets if player has surplus food
-                int playerFood = gm.State.Supplies.GetValueOrDefault("food", 0);
-                if (playerFood >= 40)
-                {
-                    gm.State.Supplies["food"] = playerFood - 30;
-                    gm.State.Supplies["bullets"] = gm.State.Supplies.GetValueOrDefault("bullets", 0) + 20;
-                    _messageQueue.Enqueue("THE TRADER EXCHANGED 30 LBS OF FOOD FOR 20 BULLETS.");
-                }
-                else
-                {
-                    _messageQueue.Enqueue("THE TRADER HAD NOTHING YOU NEEDED. HE MOVED ON.");
-                }
+                // Stash offer in StopFlags so the sentinel handler can retrieve it
+                gm.State.StopFlags["pending_trade_offer"] = gm.State.PendingEncounter;
+                _messageQueue.Enqueue("__trade__");
             }
             gm.State.PendingEncounter = null;
         }
@@ -781,6 +776,27 @@ public partial class MainScene : Control
             // The Dalles: queue route choice trigger after hint is dismissed
             if (townName == "The Dalles" && !gm.State.RouteChoiceMade)
                 _messageQueue.Enqueue("__route_choice__");
+        }
+        else if (gm.State.PendingStopType == "landmark")
+        {
+            // Scenic/pass/toll landmarks: show arrival text with landmark bg image.
+            // No store, no EnterTown, no music change.
+            // Mark visited so the map renders the pin at full opacity.
+            string landmarkName = gm.State.PendingStopKey ?? "";
+            gm.State.PendingStopType = null;
+            gm.State.PendingStopKey  = null;
+
+            if (!gm.State.VisitedLandmarks.Contains(landmarkName))
+                gm.State.VisitedLandmarks.Add(landmarkName);
+
+            var lm = Array.Find(GameData.Landmarks, l => l.Name == landmarkName);
+            string arrivalText = lm?.ArrivalText ?? $"YOU HAVE REACHED {landmarkName.ToUpper()}.";
+            string? bgImg = lm?.BgImage;
+            ShowMessage(arrivalText, bgImg);
+
+            // Queue next-stop hint if available
+            if (lm?.NextStopHint != null)
+                _messageQueue.Enqueue("__text__:" + lm.NextStopHint);
         }
         else if (gm.State.PendingStopType == "river")
         {
@@ -860,6 +876,12 @@ public partial class MainScene : Control
                         _messagePanel.Visible = false;
                         _awaitingClick = false;
                         ShowRouteChoiceScreen();
+                    }
+                    else if (next == "__trade__")
+                    {
+                        _messagePanel.Visible = false;
+                        _awaitingClick = false;
+                        ShowTradeScreen();
                     }
                     else if (next.StartsWith("__text__:"))
                     {
@@ -1153,6 +1175,53 @@ public partial class MainScene : Control
         RemoveVictoryScreen();
         RemoveGameOverScreen();
         ShowMainMenu();
+    }
+
+    // ========================================================================
+    // TRADE SCREEN
+    // ========================================================================
+
+    private void ShowTradeScreen()
+    {
+        var gm    = GameManager.Instance;
+        var offer = gm.State.StopFlags.GetValueOrDefault("pending_trade_offer")
+                    as System.Collections.Generic.Dictionary<string, object>;
+        gm.State.StopFlags.Remove("pending_trade_offer");
+
+        if (offer == null)
+        {
+            // No offer data; fall through to choice menu
+            _flowState = FlowState.AwaitChoice;
+            ShowChoiceMenu();
+            return;
+        }
+
+        HideChoiceMenu();
+        _tradeScreen = new TradeScreen();
+        _tradeScreen.Initialize(gm.State, offer);
+        AddChild(_tradeScreen);
+        _tradeScreen.TradeResolved += OnTradeResolved;
+    }
+
+    private void RemoveTradeScreen()
+    {
+        if (_tradeScreen != null)
+        {
+            _tradeScreen.TradeResolved -= OnTradeResolved;
+            _tradeScreen.QueueFree();
+            _tradeScreen = null;
+        }
+    }
+
+    private void OnTradeResolved(bool accepted, string resultMessage)
+    {
+        RemoveTradeScreen();
+        UpdateHUD();
+        ShowMessage(resultMessage,
+            accepted
+                ? "res://assets/images/events/evt_enc_trade.webp"
+                : null);
+        // OnMessageDismissed -> ShowChoiceMenu (FlowState.AwaitChoice already set)
     }
 
     // ========================================================================
