@@ -54,6 +54,7 @@ public static class HealthSystem
                 p.Health = Math.Max(GameConstants.HealthDead, p.Health - damage);
                 if (p.Health <= 0)
                 {
+                    JournalSystem.Add(st, "death", $"{p.Name} died of starvation.");
                     p.Alive = false;
                     p.Unconscious = false;
                 }
@@ -75,12 +76,14 @@ public static class HealthSystem
             if (p.IllnessDays <= 0)
             {
                 // Illness ended naturally
+                string recoveredFrom = GameData.IllnessDisplayName(p.Illness);
                 p.Illness = "";
                 p.IllnessSeverity = 0.0f;
                 p.IllnessDays = 0;
                 // Recovery bonus
                 p.Health = Clamp(p.Health + GameManager.RandInt(
                     GameConstants.IllnessRecoveryMin, GameConstants.IllnessRecoveryMax));
+                JournalSystem.Add(st, "illness", $"{p.Name} recovered from {recoveredFrom}.");
                 continue;
             }
 
@@ -104,6 +107,7 @@ public static class HealthSystem
 
             if (p.Health <= 0)
             {
+                JournalSystem.Add(st, "death", $"{p.Name} died from {GameData.IllnessDisplayName(p.Illness)}.");
                 p.Alive = false;
                 p.Unconscious = false;
             }

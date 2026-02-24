@@ -399,4 +399,14 @@ public static class TK
     public const string RouteBarlowChosen   = "ROUTE_BARLOW_CHOSEN";
     public const string RouteColumbiaChosen = "ROUTE_COLUMBIA_CHOSEN";
     public const string GameOverCauseFail   = "GAME_OVER_CAUSE_FAIL";
+    public const string TravelViewJournal   = "TRAVEL_VIEW_JOURNAL";
+
+    // ========================================================================
+    // JOURNAL SCREEN
+    // ========================================================================
+    public const string JournalTitle        = "JOURNAL_TITLE";
+    public const string JournalEmpty        = "JOURNAL_EMPTY";
+    public const string JournalClose        = "JOURNAL_CLOSE";
+    public const string JournalFilterAll    = "JOURNAL_FILTER_ALL";
+    public const string JournalDayMile      = "JOURNAL_DAY_MILE";
 }

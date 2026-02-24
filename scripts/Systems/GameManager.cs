@@ -127,6 +127,15 @@ public partial class GameManager : Node
             info["miles_traveled"] = newMiles - oldMiles;
         }
 
+        // Journal: log any event or illness-onset that fired this tick via LastEvent.
+        // Death writes are added directly in HealthSystem; those do not go through LastEvent.
+        if (State.LastEvent.TryGetValue("text", out var evObj) && evObj is string evText && !string.IsNullOrEmpty(evText))
+        {
+            string evType = State.LastEvent.GetValueOrDefault("type", "") as string ?? "";
+            string cat = evType is "illness" or "starvation" ? "illness" : "event";
+            JournalSystem.Add(State, cat, evText);
+        }
+
         // Update unconscious flags
         HealthSystem.UpdateUnconsciousFlags(State);
 
@@ -192,6 +201,9 @@ public partial class GameManager : Node
         {
             State.VisitedLandmarks.Add(townName);
         }
+
+        // Journal: first visit to this landmark
+        JournalSystem.Add(State, "landmark", $"Arrived at {townName}.");
 
         // Auto-save on fort/town arrival
         SaveFileSystem.AutoSave(State);

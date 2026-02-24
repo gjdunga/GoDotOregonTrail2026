@@ -157,6 +157,10 @@ public partial class SaveSlotScreen : Control
         };
         panel.AddThemeStyleboxOverride("panel", style);
 
+        // VBox contains: top stats row + optional recent log lines
+        var vbox = new VBoxContainer();
+        vbox.AddThemeConstantOverride("separation", 3);
+
         var hbox = new HBoxContainer();
         hbox.AddThemeConstantOverride("separation", 16);
 
@@ -204,7 +208,20 @@ public partial class SaveSlotScreen : Control
             hbox.AddChild(lblDate);
         }
 
-        panel.AddChild(hbox);
+        vbox.AddChild(hbox);
+
+        // Recent journal log (only for occupied slots with log entries)
+        if (!isEmpty && meta!.RecentLog.Count > 0)
+        {
+            foreach (string logLine in meta.RecentLog)
+            {
+                var lblLog = UIKit.MakeBodyLabel(logLine, 11, UIKit.ColGray);
+                lblLog.HorizontalAlignment = HorizontalAlignment.Left;
+                vbox.AddChild(lblLog);
+            }
+        }
+
+        panel.AddChild(vbox);
 
         // Wrap in a button-like clickable area
         if (!isEmpty)

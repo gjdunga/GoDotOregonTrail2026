@@ -68,6 +68,7 @@ public partial class MainScene : Control
     private VictoryScreen? _victoryScreen;
     private GameOverScreen? _gameOverScreen;
     private DevConsole? _devConsole;
+    private JournalScreen? _journalScreen;
 
     public override void _Ready()
     {
@@ -282,10 +283,11 @@ public partial class MainScene : Control
         row1.AddChild(MakeChoiceButton(Tr(TK.TravelPaceRations), 4));
 
         // Row 2
-        row2.AddChild(MakeChoiceButton(Tr(TK.TravelGoHunting), 5));
-        row2.AddChild(MakeChoiceButton(Tr(TK.TravelGoFishing), 6));
-        row2.AddChild(MakeChoiceButton(Tr(TK.TravelSaveGame),  7));
-        row2.AddChild(MakeChoiceButton(Tr(TK.TravelRoles),     8));
+        row2.AddChild(MakeChoiceButton(Tr(TK.TravelGoHunting),   5));
+        row2.AddChild(MakeChoiceButton(Tr(TK.TravelGoFishing),   6));
+        row2.AddChild(MakeChoiceButton(Tr(TK.TravelSaveGame),    7));
+        row2.AddChild(MakeChoiceButton(Tr(TK.TravelRoles),       8));
+        row2.AddChild(MakeChoiceButton(Tr(TK.TravelViewJournal), 9));
 
         vbox.AddChild(row1);
         vbox.AddChild(row2);
@@ -574,6 +576,9 @@ public partial class MainScene : Control
         // Already in Independence from StartNewGame. Leave town to start travel.
         GameManager.Instance.LeaveTown();
 
+        // Journal: log the departure as the first entry
+        JournalSystem.Add(GameManager.Instance.State, "system", "Departed Independence, Missouri. The trail begins.");
+
         ShowHUD();
         _flowState = FlowState.AwaitChoice;
         UpdateHUD();
@@ -625,6 +630,9 @@ public partial class MainScene : Control
         st.StopFlags.Remove("river_crossing_msg");
 
         RemoveRiverCrossingScreen();
+
+        // Journal: log the crossing result
+        JournalSystem.Add(st, "river", msg);
 
         // Restore travel background now that the river screen is gone
         SetBackground(TravelSystem.TravelBgForState(st));
@@ -834,6 +842,7 @@ public partial class MainScene : Control
 
         if (reason == "chapter_complete")
         {
+            JournalSystem.Add(GameManager.Instance.State, "system", "Arrived in the Willamette Valley. Oregon City reached.");
             _flowState = FlowState.Victory;
             ShowVictoryScreen();
         }
@@ -962,6 +971,9 @@ public partial class MainScene : Control
             case 8:
                 ShowRolesScreen();
                 break;
+            case 9:
+                ShowJournalScreen();
+                break;
         }
 
         UpdateHUD();
@@ -1026,6 +1038,8 @@ public partial class MainScene : Control
             ? string.Format(Tr(TK.HuntResultMeat), meat, ammo)
             : string.Format(Tr(TK.HuntResultEmpty), ammo);
 
+        JournalSystem.Add(st, "hunt", msg);
+
         string? fail = GameManager.Instance.CheckFailStates();
         if (fail != null) { HandleGameEnd(fail); return; }
 
@@ -1070,6 +1084,8 @@ public partial class MainScene : Control
         string msg = added > 0
             ? string.Format(Tr(TK.FishResultCatch), added)
             : Tr(TK.FishResultMiss);
+
+        JournalSystem.Add(st, "fish", msg);
 
         string? fail = GameManager.Instance.CheckFailStates();
         if (fail != null) { HandleGameEnd(fail); return; }
@@ -1288,6 +1304,9 @@ public partial class MainScene : Control
         string msg = choice == "barlow"
             ? Tr(TK.RouteBarlowChosen)
             : Tr(TK.RouteColumbiaChosen);
+
+        JournalSystem.Add(GameManager.Instance.State, "route", msg);
+
         ShowMessage(msg);
         // After message dismiss, OnMessageDismissed -> ShowChoiceMenu (FlowState.AwaitChoice)
     }
@@ -1319,6 +1338,36 @@ public partial class MainScene : Control
     private void OnRolesConfirmed()
     {
         RemoveRolesScreen();
+        UpdateHUD();
+        ShowChoiceMenu();
+    }
+
+    // ========================================================================
+    // JOURNAL SCREEN
+    // ========================================================================
+
+    private void ShowJournalScreen()
+    {
+        HideChoiceMenu();
+        _journalScreen = new JournalScreen();
+        _journalScreen.Initialize(GameManager.Instance.State);
+        AddChild(_journalScreen);
+        _journalScreen.JournalClosed += OnJournalClosed;
+    }
+
+    private void RemoveJournalScreen()
+    {
+        if (_journalScreen != null)
+        {
+            _journalScreen.JournalClosed -= OnJournalClosed;
+            _journalScreen.QueueFree();
+            _journalScreen = null;
+        }
+    }
+
+    private void OnJournalClosed()
+    {
+        RemoveJournalScreen();
         UpdateHUD();
         ShowChoiceMenu();
     }
