@@ -185,6 +185,10 @@ public static class GameConstants
     public const float RiverNotesGoodBonus = 0.15f;
     public const float RiverNotesBadPenalty = 0.10f;
 
+    // Guide cost range in dollars (paid upfront, reduces failure risk significantly)
+    public const int RiverGuideCostMin = 10;
+    public const int RiverGuideCostMax = 30;
+
     // ========================================================================
     // RANDOM EVENTS & ENCOUNTERS
     // ========================================================================

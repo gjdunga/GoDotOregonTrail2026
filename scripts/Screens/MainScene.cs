@@ -53,6 +53,7 @@ public partial class MainScene : Control
     private PartySetupScreen? _partySetupScreen;
     private SaveSlotScreen? _saveSlotScreen;
     private IndependenceScreen? _independenceScreen;
+    private RiverCrossingScreen? _riverCrossingScreen;
     private DevConsole? _devConsole;
 
     public override void _Ready()
@@ -543,6 +544,95 @@ public partial class MainScene : Control
     }
 
     // ========================================================================
+    // RIVER CROSSING SCREEN
+    // ========================================================================
+
+    private void ShowRiverCrossingScreen(GameData.RiverInfo river)
+    {
+        _flowState = FlowState.River;
+        HideChoiceMenu();
+
+        // Set the river-specific background before the screen overlays it
+        SetBackground(river.BgImage);
+
+        _riverCrossingScreen = new RiverCrossingScreen();
+        _riverCrossingScreen.Initialize(GameManager.Instance.State, river);
+        AddChild(_riverCrossingScreen);
+        _riverCrossingScreen.CrossingComplete  += OnRiverCrossingComplete;
+        _riverCrossingScreen.WaitDayRequested  += OnRiverWaitDayRequested;
+    }
+
+    private void RemoveRiverCrossingScreen()
+    {
+        if (_riverCrossingScreen != null)
+        {
+            _riverCrossingScreen.CrossingComplete -= OnRiverCrossingComplete;
+            _riverCrossingScreen.WaitDayRequested -= OnRiverWaitDayRequested;
+            _riverCrossingScreen.QueueFree();
+            _riverCrossingScreen = null;
+        }
+    }
+
+    private void OnRiverCrossingComplete()
+    {
+        var st = GameManager.Instance.State;
+
+        // Retrieve result flags written by RiverCrossingScreen before it signalled
+        bool success = st.StopFlags.GetValueOrDefault("river_crossing_success") as bool? ?? false;
+        string msg   = st.StopFlags.GetValueOrDefault("river_crossing_msg") as string
+                       ?? "THE CROSSING IS DONE.";
+        st.StopFlags.Remove("river_crossing_success");
+        st.StopFlags.Remove("river_crossing_msg");
+
+        RemoveRiverCrossingScreen();
+
+        // Restore travel background now that the river screen is gone
+        SetBackground(TravelSystem.TravelBgForState(st));
+
+        // Check for deaths from crossing failure before continuing
+        string? fail = GameManager.Instance.CheckFailStates();
+        if (fail != null)
+        {
+            // Show the crossing result first, then the game-over message on next dismiss.
+            // Set flow state before ShowMessage so OnMessageDismissed routes correctly.
+            _flowState = fail == "chapter_complete" ? FlowState.Victory : FlowState.GameOver;
+            SetBackground("res://assets/images/bg/bg_oregon_city_arrival.webp");
+
+            string gameOverMsg = fail switch
+            {
+                "game_over_dead"        => "EVERYONE IS DEAD.",
+                "game_over_unconscious" => "THE PARTY FELL UNCONSCIOUS AND NEVER RECOVERED.",
+                "game_over_starved"     => "YOU RAN OUT OF FOOD FOR TOO LONG.\nTHE PARTY STARVED ON THE TRAIL.",
+                "game_over_stranded"    => "YOU CANNOT MOVE ON.\nWITHOUT OXEN OR A WORKING WAGON, THE JOURNEY ENDS HERE.",
+                "game_over_time"        => "WINTER CAME. YOU RAN OUT OF TIME.",
+                "chapter_complete"      => "WILLAMETTE VALLEY. YOU MADE IT!\nSURVIVORS CONTINUE TO CHAPTER 2.",
+                _                       => $"GAME OVER: {fail}",
+            };
+
+            // Crossing result -> game over msg -> main menu (two dismissals)
+            ShowMessage(msg);
+            _messageQueue.Enqueue(gameOverMsg);
+            _messageQueue.Enqueue($"MILES TRAVELED: {st.Miles}");
+            return;
+        }
+
+        _flowState = FlowState.AwaitChoice;
+        UpdateHUD();
+        ShowMessage(msg);
+        // OnMessageDismissed -> ShowChoiceMenu continues normally
+    }
+
+    private void OnRiverWaitDayRequested()
+    {
+        // Advance one rest day so depth context updates for the player
+        GameManager.Instance.Rest(1);
+        UpdateHUD();
+
+        // Tell the screen to refresh its UI with the new date/weather
+        _riverCrossingScreen?.OnWaitDayProcessed();
+    }
+
+    // ========================================================================
     // TRAVEL LOOP
     // ========================================================================
 
@@ -599,12 +689,13 @@ public partial class MainScene : Control
             var river = Array.Find(GameData.Rivers, r => r.Key == riverKey);
             if (river != null)
             {
-                ShowMessage($"YOU MUST CROSS THE {river.Name.ToUpper()}.");
-                var (success, msg) = RiverSystem.AttemptCrossing(gm.State, river, RiverSystem.CrossingMethod.Ford);
-                _messageQueue.Enqueue(msg);
+                gm.State.PendingStopType = null;
+                gm.State.PendingStopKey  = null;
+                ShowRiverCrossingScreen(river);
+                return; // Flow resumes via OnRiverCrossingComplete
             }
             gm.State.PendingStopType = null;
-            gm.State.PendingStopKey = null;
+            gm.State.PendingStopKey  = null;
         }
 
         fail = gm.CheckFailStates();
